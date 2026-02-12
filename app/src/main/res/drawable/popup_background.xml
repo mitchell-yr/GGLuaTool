@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#F7F8FA" /> <!-- 使用一个非常浅的灰色，比纯白更有质感 -->
+    <corners android:radius="16dp" />
+</shape>

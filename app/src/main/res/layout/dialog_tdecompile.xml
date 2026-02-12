@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_background">
+
+    <!-- 标题区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/dialog_header_background_variant"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_code"
+                app:tint="@android:color/white"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TDECOMPILE 反编译"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="选择要反编译的Lua脚本"
+            android:textColor="#E0E0E0"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- 内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- 折叠介绍区域 -->
+        <LinearLayout
+            android:id="@+id/ll_tdecompile_intro_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <!-- 折叠标题 -->
+            <LinearLayout
+                android:id="@+id/ll_tdecompile_intro_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_tdecompile_expand_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_expand_more"
+                    app:tint="#7B1FA2" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="TDECOMPILE介绍"
+                    android:textColor="#7B1FA2"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="外部工具"
+                    android:textColor="#FFAB00"
+                    android:textSize="10sp"
+                    android:background="@drawable/badge_background"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp" />
+
+            </LinearLayout>
+
+            <!-- 折叠内容 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_tdecompile_intro_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#EDE7F6"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TDECOMPILE是lua脚本的高级反编译工具。"
+                        android:textColor="#4A148C"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="主要特性："
+                        android:textColor="#4A148C"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• 可选字段\n• 基于unluac"
+                        android:textColor="#6A1B9A"
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="3dp" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+
+        <!-- 快速选项 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="附加选项"
+            android:textColor="#7B1FA2"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+<!--                <com.google.android.material.chip.Chip-->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/autoComplete_TD"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="自动完成"
+                    app:buttonTint="@color/purple_500"
+                    android:layout_marginEnd="8dp" />
+<!--                    app:chipBackgroundColor="#F3E5F5"-->
+<!--                    app:chipStrokeColor="#7B1FA2"-->
+<!--                    app:chipStrokeWidth="1dp"-->
+
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+        <!-- 选项按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_tdecompile_select_from_project"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:text="下载TDEcompile"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:backgroundTint="#7B1FA2"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_download"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@android:color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_tdecompile_select_custom"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:text="打开TD"
+            android:textColor="#7B1FA2"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_file"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="#7B1FA2"
+            app:strokeColor="#7B1FA2"
+            app:strokeWidth="2dp" />
+
+        <!-- 高级选项 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_tdecompile_auto"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="自动处理"
+            android:textColor="#9C27B0"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            app:icon="@drawable/ic_batch"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="#9C27B0" />
+
+        <!-- 取消按钮 -->
+        <TextView
+            android:id="@+id/tv_tdecompile_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:padding="8dp"
+            android:text="取消"
+            android:textColor="#757575"
+            android:textSize="14sp"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+    </LinearLayout>
+
+</LinearLayout>

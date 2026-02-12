@@ -1,0 +1,1356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/home_drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 主内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 自定义工具栏 -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/home_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:elevation="4dp"
+            app:title="悠然GG助手"
+            app:titleTextColor="@android:color/white" />
+
+        <!-- 滚动内容区域 -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- 轮播图容器 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="4dp">
+
+                    <androidx.viewpager2.widget.ViewPager2
+                        android:id="@+id/viewPager"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <!-- 轮播图指示器 -->
+                    <LinearLayout
+                        android:id="@+id/indicatorLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:padding="8dp" />
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- 卡片1 - 浅紫色背景 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="#F3E5F5"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 卡片头部 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/card_header_gradient"
+                            android:orientation="horizontal"
+                            android:padding="8dp">
+
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="12dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="GameGuardian"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
+
+
+
+                        </LinearLayout>
+
+                        <!-- 卡片内容 -->
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- 主要操作按钮 -->
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_vertical"
+                                    android:layout_marginTop="4dp"
+                                    android:text="v101.1 官方最新版 • 12.5MB"
+                                    android:textColor="#9E9E9E"
+                                    android:textSize="11sp" />
+
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_downloadGG"
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:text="下载 GameGuardian"
+                                android:textAllCaps="false"
+                                android:textSize="16sp"
+                                app:backgroundTint="#6200EE"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_download"
+                                app:iconGravity="textStart"
+                                app:iconPadding="8dp"
+                                app:rippleColor="#3700B3" />
+
+
+                            <!-- 分隔线 -->
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_GGTutorial"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_school"
+                                        app:tint="#AB47BC" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="使用教程"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="新手入门指南与实战技巧"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <com.google.android.material.chip.Chip
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="24dp"
+                                        android:text="新手"
+                                        android:textColor="#FF6F00"
+                                        android:textSize="10sp"
+                                        app:chipBackgroundColor="#FFF3E0FF"
+                                        app:chipMinHeight="24dp" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="16dp"
+                                android:background="#E0E0E0" />
+
+                            <!-- 快速链接标题 -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:text="GGlua脚本编写"
+                                android:textColor="#424242"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <!-- 文档按钮 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_GGDocument"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp"
+                                    android:gravity="center_vertical"
+                                    android:background="?attr/selectableItemBackground">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_document"
+                                        app:tint="#7E57C2" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="GGlua脚本官方文档"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="查询GG脚本语法和函数参考"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- 教程按钮 -->
+
+                            <!-- 底部快捷操作 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_forum"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginEnd="4dp"
+                                    android:text="社区"
+                                    android:textColor="#7E57C2"
+                                    android:textSize="13sp"
+                                    app:icon="@drawable/ic_forum"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#7E57C2"
+                                    app:rippleColor="#E8EAF6" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_video"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginHorizontal="4dp"
+                                    android:text="视频"
+                                    android:textColor="#7E57C2"
+                                    android:textSize="13sp"
+                                    app:icon="@drawable/ic_video"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#7E57C2"
+                                    app:rippleColor="#E8EAF6" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_faq"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="4dp"
+                                    android:text="FAQ"
+                                    android:textColor="#7E57C2"
+                                    android:textSize="13sp"
+                                    app:icon="@drawable/ic_help"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#7E57C2"
+                                    app:rippleColor="#E8EAF6" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- 卡片2 - 渐变紫色背景 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="#EDE7F6"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 卡片头部 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/card_header_gradient"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_security"
+                                app:tint="@android:color/white" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="12dp"
+                                android:layout_gravity="center_vertical"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="脚本加解密"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="22sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="lua脚本加密、解密工具"
+                                    android:textColor="#E1BEE7"
+                                    android:textSize="12sp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- 卡片内容 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- 反编译工具区域 -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:text="反编译工具"
+                                android:textColor="#424242"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <!-- lua虚拟机 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_virtualmachine_decrypt"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_code"
+                                        app:tint="#9C27B0" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Lua虚拟机"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="使用虚拟机绕过各种防反防御"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- unluac反编译 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_unluac"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_build"
+                                        app:tint="#6200EE" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Unluac反编译"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="经典反编译工具"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <com.google.android.material.chip.Chip
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="24dp"
+                                        android:text="推荐"
+                                        android:textColor="#6200EE"
+                                        android:textSize="10sp"
+                                        app:chipBackgroundColor="#E8EAF6"
+                                        app:chipMinHeight="24dp" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- TDECOMPILE反编译 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_tdecompile"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_developer_mode"
+                                        app:tint="#7B1FA2" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="TDECOMPILE反编译"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="高级反编译引擎"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- GG内置反编译与log -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="16dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_gg_decompile"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_integration"
+                                        app:tint="#9C27B0" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="GG内置反编译与log"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="快速调试与日志查看"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- 分隔线 -->
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="4dp"
+                                android:background="#E0E0E0" />
+
+                            <!-- 学习资源区域 -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:layout_marginBottom="12dp"
+                                android:text="学习资源"
+                                android:textColor="#424242"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <!-- 底部按钮组 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_encrypt_tutorial"
+                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="48dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginEnd="6dp"
+                                    android:text="加密教程"
+                                    android:textColor="#6200EE"
+                                    android:textSize="13sp"
+                                    app:cornerRadius="8dp"
+                                    app:icon="@drawable/ic_lock"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="18dp"
+                                    app:iconTint="#6200EE"
+                                    app:strokeColor="#6200EE"
+                                    app:strokeWidth="1.5dp"
+                                    app:rippleColor="#E8EAF6" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_decrypt_tutorial"
+                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="48dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="6dp"
+                                    android:text="解密教程"
+                                    android:textColor="#6200EE"
+                                    android:textSize="13sp"
+                                    app:cornerRadius="8dp"
+                                    app:icon="@drawable/ic_lock_open"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="18dp"
+                                    app:iconTint="#6200EE"
+                                    app:strokeColor="#6200EE"
+                                    app:strokeWidth="1.5dp"
+                                    app:rippleColor="#E8EAF6" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+
+                <!-- 卡片3 - 定制化GG修改器 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="#E8EAF6"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 卡片头部 - 纯色背景 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#6200EE"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <ImageView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:padding="8dp"
+                                    android:src="@drawable/ic_build"
+                                    app:tint="@android:color/white" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="8dp"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="定制化GG修改器"
+                                        android:textColor="@android:color/white"
+                                        android:textSize="22sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="打造属于你的专属修改器"
+                                        android:textColor="#E1BEE7"
+                                        android:textSize="13sp" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- 卡片内容 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- 主要功能按钮 - 一键生成 -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_auto_generate"
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:layout_marginBottom="16dp"
+                                android:text="自动一键生成定制 APK"
+                                android:textAllCaps="false"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                app:backgroundTint="#6200EE"
+                                app:cornerRadius="10dp"
+                                app:elevation="2dp"
+                                app:icon="@drawable/ic_rocket"
+                                app:iconGravity="textStart"
+                                app:iconPadding="12dp"
+                                app:iconSize="24dp"
+                                app:rippleColor="#3700B3" />
+
+
+                            <!-- 功能区标题 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="12dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="定制功能"
+                                    android:textColor="#424242"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="1dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="12dp"
+                                    android:background="#D1C4E9" />
+
+                            </LinearLayout>
+
+                            <!-- 功能按钮网格 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <!-- 第一行：修改器布局美化 + 函数添加 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:layout_marginBottom="8dp">
+
+                                    <!-- 布局美化教程 -->
+                                    <com.google.android.material.card.MaterialCardView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginEnd="4dp"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        app:cardBackgroundColor="@android:color/white"
+                                        app:cardCornerRadius="8dp"
+                                        app:cardElevation="0dp"
+                                        app:strokeColor="#B39DDB"
+                                        app:strokeWidth="1dp">
+
+                                        <LinearLayout
+                                            android:id="@+id/btn_layout_beautify"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:orientation="vertical"
+                                            android:padding="8dp"
+                                            android:gravity="center"
+                                            android:background="?attr/selectableItemBackground">
+
+                                            <ImageView
+                                                android:layout_width="36dp"
+                                                android:layout_height="36dp"
+                                                android:padding="6dp"
+                                                android:src="@drawable/ic_palette"
+                                                app:tint="#7E57C2" />
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_marginTop="0dp"
+                                                android:text="布局美化教程"
+                                                android:textColor="#5E35B1"
+                                                android:textSize="13sp"
+                                                android:textStyle="bold"
+                                                android:gravity="center" />
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_marginTop="2dp"
+                                                android:text="界面定制"
+                                                android:textColor="#9575CD"
+                                                android:textSize="11sp"
+                                                android:gravity="center" />
+
+                                        </LinearLayout>
+
+                                    </com.google.android.material.card.MaterialCardView>
+
+                                    <!-- 函数添加教程 -->
+                                    <com.google.android.material.card.MaterialCardView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginStart="4dp"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        app:cardBackgroundColor="@android:color/white"
+                                        app:cardCornerRadius="8dp"
+                                        app:cardElevation="0dp"
+                                        app:strokeColor="#B39DDB"
+                                        app:strokeWidth="1dp">
+
+                                        <LinearLayout
+                                            android:id="@+id/btn_function_add"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:orientation="vertical"
+                                            android:padding="8dp"
+                                            android:gravity="center"
+                                            android:background="?attr/selectableItemBackground">
+
+                                            <ImageView
+                                                android:layout_width="36dp"
+                                                android:layout_height="36dp"
+                                                android:padding="6dp"
+                                                android:src="@drawable/ic_code"
+                                                app:tint="#7E57C2" />
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_marginTop="0dp"
+                                                android:text="函数添加教程"
+                                                android:textColor="#5E35B1"
+                                                android:textSize="13sp"
+                                                android:textStyle="bold"
+                                                android:gravity="center" />
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_marginTop="2dp"
+                                                android:text="功能扩展"
+                                                android:textColor="#9575CD"
+                                                android:textSize="11sp"
+                                                android:gravity="center" />
+
+                                        </LinearLayout>
+
+                                    </com.google.android.material.card.MaterialCardView>
+
+                                </LinearLayout>
+
+                                <!-- 第二行：浏览内置函数 - 透明背景带边框按钮 -->
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_browse_functions"
+                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:paddingVertical="8dp"
+                                    android:text="浏览可添加内置函数"
+                                    android:textAllCaps="false"
+                                    android:textColor="#5E35B1"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    app:cornerRadius="8dp"
+                                    app:icon="@drawable/ic_library"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="8dp"
+                                    app:iconSize="24dp"
+                                    app:iconTint="#6200EE"
+                                    app:rippleColor="#E8EAF6"
+                                    app:strokeColor="#B39DDB"
+                                    app:strokeWidth="1dp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+
+
+                <!-- 卡片4 - 虚拟框架 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="#EDE7F6"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- 卡片头部 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/card_header_gradient"
+                            android:orientation="horizontal"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="12dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="虚拟框架"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- 卡片内容 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- 状态信息 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:id="@+id/tv_vf_status"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginTop="4dp"
+                                    android:text="未安装 • 推荐使用 • 提升兼容性"
+                                    android:textColor="#9E9E9E"
+                                    android:textSize="11sp" />
+
+                                <com.google.android.material.chip.Chip
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="24dp"
+                                    android:text="推荐"
+                                    android:textColor="#1B5E20"
+                                    android:textSize="10sp"
+                                    app:chipBackgroundColor="#E8F5E9"
+                                    app:chipMinHeight="24dp" />
+
+                            </LinearLayout>
+
+                            <!-- 主要操作按钮 -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_enterVF"
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:layout_marginTop="8dp"
+                                android:text="进入虚拟框架"
+                                android:textAllCaps="false"
+                                android:textSize="16sp"
+                                app:backgroundTint="#6200EE"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_launch"
+                                app:iconGravity="textStart"
+                                app:iconPadding="8dp"
+                                app:rippleColor="#3700B3" />
+
+                            <!-- 配置卡片 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_configVF"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_settings"
+                                        app:tint="#AB47BC" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="配置虚拟框架"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="管理虚拟环境与应用设置"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- 分隔线 -->
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="16dp"
+                                android:background="#E0E0E0" />
+
+                            <!-- 帮助标题 -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:text="了解更多"
+                                android:textColor="#424242"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <!-- 为什么需要虚拟框架 -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#E8EAF6"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:id="@+id/btn_whyVF"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:padding="12dp"
+                                    android:gravity="center_vertical"
+                                    android:background="?attr/selectableItemBackground">
+
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:padding="4dp"
+                                        android:src="@drawable/ic_help_outline"
+                                        app:tint="#7E57C2" />
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginHorizontal="12dp"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="为什么需要虚拟框架？"
+                                            android:textColor="#4A148C"
+                                            android:textSize="15sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="2dp"
+                                            android:text="了解虚拟框架的作用与优势"
+                                            android:textColor="#9575CD"
+                                            android:textSize="12sp" />
+
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- 底部快捷操作 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_vf_install"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginEnd="6dp"
+                                    android:text="安装框架"
+                                    android:textColor="#7E57C2"
+                                    android:textSize="13sp"
+                                    app:icon="@drawable/ic_download"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#7E57C2"
+                                    app:rippleColor="#E8EAF6" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_vf_tutorial"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="6dp"
+                                    android:text="使用教程"
+                                    android:textColor="#7E57C2"
+                                    android:textSize="13sp"
+                                    app:icon="@drawable/ic_school"
+                                    app:iconGravity="textStart"
+                                    app:iconPadding="4dp"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#7E57C2"
+                                    app:rippleColor="#E8EAF6" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </LinearLayout>
+
+    <!-- 侧滑菜单 -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/home_nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/nav_header_home"
+        app:menu="@menu/home_drawer_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

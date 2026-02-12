@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_unluac_decompile_background"
+    android:clipToOutline="true">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FF3700B3"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_folder"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="保存文件"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <ImageView
+            android:id="@+id/iv_close_save"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- 内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- 文件名预览 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F3E5F5"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:tint="#7B1FA2"
+                    android:layout_marginEnd="10dp"/>
+
+                <TextView
+                    android:id="@+id/tv_output_filename"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="output.lua"
+                    android:textColor="#4A148C"
+                    android:textSize="14sp"
+                    android:fontFamily="monospace"
+                    android:singleLine="true"
+                    android:ellipsize="middle"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- 保存位置选项 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="选择保存位置"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#424242"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ✅ 修复：RadioButton 作为 RadioGroup 的直接子元素 -->
+        <RadioGroup
+            android:id="@+id/rg_save_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/radio_group_background"
+            android:padding="4dp">
+
+            <!-- 原目录选项 -->
+            <RadioButton
+                android:id="@+id/rb_original_dir"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="保存到原目录"
+                android:padding="14dp"
+                android:checked="true"
+                android:background="@drawable/radio_item_selector"
+                android:buttonTint="#FF3700B3"
+                android:textColor="#424242"/>
+
+            <!-- 自定义路径选项 -->
+            <RadioButton
+                android:id="@+id/rb_custom_dir"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="自定义路径"
+                android:padding="14dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/radio_item_selector"
+                android:buttonTint="#FF3700B3"
+                android:textColor="#424242"/>
+        </RadioGroup>
+
+        <!-- ✅ 自定义路径输入框移到 RadioGroup 外部 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_custom_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入保存目录"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:boxStrokeColor="#FF3700B3"
+            app:hintTextColor="#FF3700B3"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_custom_path"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:inputType="text"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 原目录路径显示 -->
+        <LinearLayout
+            android:id="@+id/ll_original_path_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:visibility="visible">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@android:drawable/ic_menu_mylocation"
+                app:tint="#757575"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:id="@+id/tv_original_path"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="/storage/emulated/0/..."
+                android:textColor="#757575"
+                android:textSize="11sp"
+                android:singleLine="true"
+                android:ellipsize="start"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 底部按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="end"
+        android:background="#FAFAFA">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textColor="#757575"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_marginEnd="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_confirm_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="确认保存"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF3700B3"
+            app:icon="@drawable/ic_save"
+            app:iconTint="#FFFFFF"
+            style="@style/Widget.MaterialComponents.Button"/>
+    </LinearLayout>
+
+</LinearLayout>

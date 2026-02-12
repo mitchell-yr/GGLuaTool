@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_error_background">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#B71C1C"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_dialog_alert"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/tv_error_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="反编译失败"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- 错误内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="#FFFFFF">
+
+        <!-- 错误图标和提示 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:background="@drawable/error_info_background">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_delete"
+                app:tint="#D32F2F"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="操作未能完成"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#C62828"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="反编译过程中发生错误"
+                    android:textSize="12sp"
+                    android:textColor="#E57373"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 错误详情 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="错误详情"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#424242"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFF3F3">
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="150dp">
+
+                <TextView
+                    android:id="@+id/tv_error_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="错误信息将显示在这里"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="#C62828"
+                    android:textIsSelectable="true"
+                    android:padding="12dp"
+                    android:lineSpacingExtra="2dp"/>
+            </ScrollView>
+        </androidx.cardview.widget.CardView>
+
+        <!-- 建议操作 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 可能的解决方案:"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• 确认文件是有效的 Lua 字节码文件\n• 检查文件是否损坏\n• 尝试使用其他 Lua 版本"
+            android:textSize="11sp"
+            android:textColor="#888888"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+    <!-- 底部按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#FAFAFA"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_copy_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="复制错误"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="#7B1FA2"
+            android:layout_marginEnd="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_close_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="关闭"
+            app:backgroundTint="#FF3700B3"
+            app:cornerRadius="20dp"
+            style="@style/Widget.MaterialComponents.Button"/>
+    </LinearLayout>
+
+</LinearLayout>

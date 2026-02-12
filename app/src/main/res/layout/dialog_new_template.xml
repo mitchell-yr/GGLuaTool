@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/templateNameEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="模板名称"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/templateVersionEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="版本号 (如: 1.0)"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/templateCodeEdit"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginTop="8dp"
+        android:gravity="top"
+        android:hint="代码内容"
+        android:inputType="textMultiLine" />
+
+</LinearLayout>

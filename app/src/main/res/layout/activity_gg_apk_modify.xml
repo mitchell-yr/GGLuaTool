@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_gray"
+    tools:context=".apktools.ModifierActivity">
+
+    <!-- 顶部标题栏 -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/purple_700"
+            app:title="GG APK Modifier"
+            app:titleTextColor="@color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- 1. 基础信息修改卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.MaterialComponents.CardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="基础信息修改"
+                        android:textColor="@color/purple_700"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- 修改图标 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+
+                        <ImageView
+                            android:id="@+id/img_app_icon"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@android:drawable/sym_def_app_icon"
+                            android:background="@color/bg_gray"
+                            android:padding="4dp"/>
+
+                        <Button
+                            android:id="@+id/btn_change_icon"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="修改图标"
+                            android:textColor="@color/purple_700"
+                            android:layout_marginStart="12dp"/>
+                    </LinearLayout>
+
+                    <!-- 软件名修改 -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="修改软件名"
+                        app:boxStrokeColor="@color/purple_700">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_app_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- 包名修改 -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="修改包名"
+                        app:boxStrokeColor="@color/purple_700">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_package_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- 版本修改 -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="修改版本号 (Version Name)"
+                        app:boxStrokeColor="@color/purple_700">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_version_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 2. 启动入口管理 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cb_delete_entry"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="删除多余启动入口"
+                        android:buttonTint="@color/purple_700"/>
+
+                    <!-- 隐藏区域：单选组 -->
+                    <RadioGroup
+                        android:id="@+id/rg_entry_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="32dp"
+                        android:visibility="gone"> <!-- 默认隐藏 -->
+
+                        <RadioButton
+                            android:id="@+id/rb_hw_accel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="保留：硬件加速入口"
+                            android:buttonTint="@color/purple_700"/>
+
+                        <RadioButton
+                            android:id="@+id/rb_sw_accel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="保留：软件加速入口"
+                            android:buttonTint="@color/purple_700"/>
+                    </RadioGroup>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 3. 内置脚本与精简 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="高级选项"
+                        android:textColor="@color/purple_700"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <!-- 内置脚本 -->
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cb_script"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="内置脚本"
+                        android:buttonTint="@color/purple_700"/>
+
+                    <Button
+                        android:id="@+id/btn_select_script"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="选择脚本文件 (.lua)"
+                        android:textColor="@color/purple_700"
+                        app:strokeColor="@color/purple_700"
+                        android:layout_marginStart="32dp"
+                        android:visibility="gone"/>
+
+                    <!-- 安装包精简 -->
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cb_slim"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="安装包精简"
+                        android:buttonTint="@color/purple_700"/>
+
+                    <LinearLayout
+                        android:id="@+id/layout_slim_options"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginStart="32dp"
+                        android:visibility="gone">
+
+                        <CheckBox android:text="Arsc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:buttonTint="@color/purple_700" android:id="@+id/cb_slim_arsc"/>
+                        <CheckBox android:text="Res" android:layout_width="wrap_content" android:layout_height="wrap_content" android:buttonTint="@color/purple_700" android:id="@+id/cb_slim_res" android:layout_marginStart="8dp"/>
+                        <CheckBox android:text="Dex" android:layout_width="wrap_content" android:layout_height="wrap_content" android:buttonTint="@color/purple_700" android:id="@+id/cb_slim_dex" android:layout_marginStart="8dp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 4. 函数添加 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cb_add_functions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="函数添加 (Hook/Patch)"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:buttonTint="@color/purple_700"/>
+
+                    <LinearLayout
+                        android:id="@+id/layout_function_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="32dp"
+                        android:visibility="gone">
+
+                        <CheckBox android:text="函数1" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                        <CheckBox android:text="函数2" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                        <CheckBox android:text="函数3" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 5. UI美化 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="80dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cb_ui_beautify"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="UI美化"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:buttonTint="@color/purple_700"/>
+
+                    <LinearLayout
+                        android:id="@+id/layout_uiBeautify_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="32dp"
+                        android:visibility="gone">
+                        <CheckBox android:text="主页美化" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                        <CheckBox android:text="悬浮窗美化" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                        </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 底部悬浮操作按钮 (FAB) 或 底部栏 -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fab_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:text="开始修改"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/purple_700"
+        app:icon="@android:drawable/ic_menu_edit"
+        app:iconTint="@color/white"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

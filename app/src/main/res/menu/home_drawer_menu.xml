@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home_donate"
+            android:icon="@drawable/ic_donate"
+            android:title="捐赠" />
+
+        <item
+            android:id="@+id/nav_home_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="设置" />
+
+        <item
+            android:id="@+id/nav_home_update"
+            android:icon="@drawable/ic_update"
+            android:title="检查更新" />
+    </group>
+
+    <item android:title="其他">
+        <menu>
+            <item
+                android:id="@+id/nav_home_openAddress"
+                android:icon="@drawable/ic_github"
+                android:title="开源地址" />
+
+            <item
+                android:id="@+id/nav_home_openLicense"
+                android:icon="@drawable/ic_license"
+                android:title="开源许可" />
+        </menu>
+    </item>
+
+</menu>

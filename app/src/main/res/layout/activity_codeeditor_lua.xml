@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <!-- 主内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#1E1E1E">
+
+        <!-- 顶部工具栏 -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/purple_500"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <!-- 日志按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_log"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_console"
+                    android:tint="#FFFFFF" />
+
+                <!-- 分隔线 -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:background="#404040" />
+
+                <!-- 撤销按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_undo"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_undo"
+                    android:tint="#FFFFFF" />
+
+                <!-- 重做按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_redo"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_redo"
+                    android:tint="#FFFFFF" />
+
+                <!-- 分隔线 -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:background="#404040" />
+
+                <!-- 复制按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_copy"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_copy"
+                    android:tint="#FFFFFF" />
+
+                <!-- 粘贴按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_paste"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_paste"
+                    android:tint="#FFFFFF" />
+
+                <!-- 分隔线 -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:background="#404040" />
+
+                <!-- 查找按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_find"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_search"
+                    android:tint="#FFFFFF" />
+
+                <!-- 函数导航按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_tutorial"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_book"
+                    android:tint="#FFFFFF" />
+
+                <!-- 弹性空间 -->
+                <Space
+                    android:layout_width="10dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <!-- 编辑按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_edit"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="0dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_edit"
+                    android:tint="#FFFFFF" />
+
+                <!-- 管理按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_manage"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="0dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_settings"
+                    android:tint="#FFFFFF" />
+
+                <!-- 保存按钮 -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_save"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/save_button_background"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_save"
+                    android:tint="#FFFFFF" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- 编辑器主体 -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <io.github.rosemoe.sora.widget.CodeEditor
+                android:id="@+id/editor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        </FrameLayout>
+
+        <!-- 符号快捷输入栏 -->
+        <HorizontalScrollView
+            android:id="@+id/symbol_bar"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:background="@color/purple_500"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/symbol_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"/>
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+    <!-- 侧滑日志面板 -->
+    <LinearLayout
+        android:id="@+id/log_drawer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:background="#ffffff">
+
+        <!-- 日志标题栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:background="@color/purple_500">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="编译日志"
+                android:textColor="#ffffff"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <ImageButton
+                android:id="@+id/btn_clear_log"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="清空"
+                android:layout_marginEnd="8dp"
+                android:tint="#ffffff"/>
+
+            <ImageButton
+                android:id="@+id/btn_copy_log"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_save"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="复制"
+                android:tint="#ffffff"/>
+
+        </LinearLayout>
+
+        <!-- 日志内容 -->
+        <ScrollView
+            android:id="@+id/log_scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:background="#f5f5f5">
+
+            <TextView
+                android:id="@+id/log_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textIsSelectable="true"
+                android:fontFamily="monospace"
+                android:textSize="12sp"
+                android:lineSpacingMultiplier="1.2"/>
+
+        </ScrollView>
+
+        <!-- 底部按钮组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <!-- 编译脚本按钮 -->
+            <Button
+                android:id="@+id/btn_compile_script"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="编译脚本"
+                android:backgroundTint="#FF9800"/>
+
+            <!-- 运行脚本按钮 -->
+            <Button
+                android:id="@+id/btn_run_script"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="运行脚本"
+                android:backgroundTint="#4CAF50"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

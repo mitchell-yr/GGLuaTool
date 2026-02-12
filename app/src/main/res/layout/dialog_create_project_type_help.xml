@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- 标题 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="项目类型介绍"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_marginBottom="15dp" />
+
+    <!-- 介绍内容 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="标准lua项目：适用于使用Lua语言开发的常规项目，提供基础的Lua开发环境和工具支持。\n\n标准cpp项目：适用于使用C++语言开发的项目，提供完整的C++编译功能。\n\n可视化lua项目：提供可视化编辑界面的Lua项目，适合快速开发和原型设计，降低开发门槛。"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:lineSpacingExtra="4dp" />
+
+    <!-- 关闭按钮 -->
+    <Button
+        android:id="@+id/btn_close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="15dp"
+        android:background="?attr/selectableItemBackground"
+        android:minWidth="80dp"
+        android:text="关闭"
+        android:textColor="@color/purple_500" />
+</LinearLayout>

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#FF6200EE"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 基本信息卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+
+                    android:background="#EEEEEE"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="基本信息"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#FF6200EE"
+                        android:layout_marginBottom="16dp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/nameLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="#FF6200EE"
+                        app:boxBackgroundColor="@color/white"
+                        app:hintTextColor="#FF6200EE">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/nameEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="模板名称"
+                            android:inputType="text" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/versionLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="#FF6200EE"
+                        app:boxBackgroundColor="@color/white"
+                        app:hintTextColor="#FF6200EE">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/versionEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="版本号"
+                            android:inputType="text" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- 代码编辑卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:background="#E5E5E5">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="代码编辑器"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#FF6200EE" />
+
+                        <TextView
+                            android:id="@+id/lineCountText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 行"
+                            android:textSize="12sp"
+                            android:textColor="#666666"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/charCountText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 字符"
+                            android:textSize="12sp"
+                            android:textColor="#666666" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#E0E0E0" />
+
+                    <!-- 改进的代码编辑器容器 -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="400dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+
+                            <!-- 行号容器 -->
+                            <ScrollView
+                                android:id="@+id/lineNumberScrollView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:scrollbars="none"
+                                android:fillViewport="true">
+
+                                <TextView
+                                    android:id="@+id/lineNumberView"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="#EEEEEE"
+                                    android:gravity="right"
+                                    android:minWidth="40dp"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingTop="12dp"
+                                    android:paddingBottom="12dp"
+                                    android:textColor="#999999"
+                                    android:textSize="14sp"
+                                    android:typeface="monospace" />
+
+                            </ScrollView>
+
+                            <View
+                                android:layout_width="1dp"
+                                android:layout_height="match_parent"
+                                android:background="#E0E0E0" />
+
+                            <!-- 代码编辑区域 -->
+                            <ScrollView
+                                android:id="@+id/codeScrollView"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:fillViewport="true">
+
+                                <HorizontalScrollView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:fillViewport="true">
+
+                                    <EditText
+                                        android:id="@+id/codeEditText"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:minWidth="1000dp"
+                                        android:background="@null"
+                                        android:gravity="top|start"
+                                        android:hint="在此输入代码..."
+                                        android:inputType="textMultiLine|textNoSuggestions"
+                                        android:paddingStart="12dp"
+                                        android:paddingEnd="12dp"
+                                        android:paddingTop="12dp"
+                                        android:paddingBottom="12dp"
+                                        android:textSize="14sp"
+                                        android:typeface="monospace"
+                                        android:lineSpacingMultiplier="1.2" />
+
+                                </HorizontalScrollView>
+
+                            </ScrollView>
+
+                        </LinearLayout>
+
+                        <!-- 错误提示覆盖层 -->
+                        <TextView
+                            android:id="@+id/errorOverlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom"
+                            android:background="#F44336"
+                            android:padding="8dp"
+                            android:text="模板内容不能以空格或换行开头"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+
+                    </FrameLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:textColor="@color/white"
+        android:text="保存模板"
+        app:backgroundTint="#FF6200EE"
+        app:icon="@drawable/ic_save"
+        app:iconTint="@android:color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="请选择项目类型"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#333333" />
+
+        <ImageView
+            android:id="@+id/iv_help"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_help"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- 单选组 -->
+    <RadioGroup
+        android:id="@+id/rg_project_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/rb_standard_lua"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:padding="12dp"
+            android:text="标准lua项目"
+            android:textColorLink="@color/purple_500"
+            android:textSize="16sp" />
+
+        <RadioButton
+            android:id="@+id/rb_standard_cpp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="标准cpp项目"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
+        <RadioButton
+            android:id="@+id/rb_visual_lua"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="可视化lua项目"
+            android:textSize="16sp"
+            android:padding="12dp" />
+    </RadioGroup>
+
+    <!-- 按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textColor="#666666"
+            android:background="?attr/selectableItemBackground"
+            android:minWidth="80dp" />
+
+        <Button
+            android:id="@+id/btn_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="?attr/selectableItemBackground"
+            android:minWidth="80dp"
+            android:text="确定"
+            android:textColor="@color/purple_500" />
+    </LinearLayout>
+</LinearLayout>

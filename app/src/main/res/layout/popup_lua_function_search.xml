@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_margin="16dp"
+    android:background="@drawable/popup_background"
+    android:elevation="12dp"> <!-- 增加阴影深度 -->
+
+    <!-- 搜索栏区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <!-- 搜索框 (父布局应用Selector) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:background="@drawable/search_bg_selector"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"
+                android:tint="@color/purple_500"
+                android:contentDescription="搜索"/>
+
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:hint="搜索Lua函数..."
+                android:textSize="14sp"
+                android:background="@null"
+                android:textColorHint="#999999"
+                android:textColor="#212121"/>
+
+        </LinearLayout>
+
+        <!-- 帮助按钮 -->
+        <ImageView
+            android:id="@+id/iv_help"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
+            android:src="@drawable/ic_help"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="@color/purple_500"
+            android:contentDescription="帮助"/>
+
+    </LinearLayout>
+
+    <!-- 分割线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"/>
+
+    <!-- 函数列表: 初始状态隐藏 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_functions"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:visibility="gone"
+        android:scrollbars="vertical"/>
+
+</LinearLayout>

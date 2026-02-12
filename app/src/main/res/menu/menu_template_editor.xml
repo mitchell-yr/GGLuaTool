@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_format"
+        android:title="格式化"
+        android:icon="@drawable/ic_share"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_trim"
+        android:title="移除首尾空白"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_insert_snippet"
+        android:title="插入代码片段"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clear"
+        android:title="清空代码"
+        app:showAsAction="never" />
+
+</menu>

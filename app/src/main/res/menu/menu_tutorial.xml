@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 搜索按钮 -->
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search"
+        android:title="搜索"
+        app:showAsAction="ifRoom"/>
+
+    <!-- 退出按钮 -->
+    <item
+        android:id="@+id/action_exit"
+        android:icon="@drawable/ic_exit_app"
+        android:title="退出"
+        app:showAsAction="ifRoom"/>
+</menu>

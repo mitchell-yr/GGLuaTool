@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <!-- 自定义ActionBar -->
+    <mituran.gglua.tool.VisualLuaScriptEditor.luaksh.CustomActionBar
+        android:id="@+id/custom_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="4dp" />
+
+    <!-- 标签页区域（横向滚动） -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tab_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:elevation="2dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:clipToPadding="false" />
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0" />
+
+    <!-- 代码块区域（整体横向+纵向滚动） -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="horizontal"
+        android:fillViewport="false">
+
+        <mituran.gglua.tool.VisualLuaScriptEditor.luaksh.FixedWidthRecyclerView
+            android:id="@+id/code_block_recycler_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+    </HorizontalScrollView>
+
+</LinearLayout>
