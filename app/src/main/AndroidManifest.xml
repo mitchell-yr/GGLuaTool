@@ -87,6 +87,11 @@
             android:theme="@style/Theme.悠然GG助手"
             android:parentActivityName=".MainActivity">
         </activity>
+        <activity
+            android:name=".tutorial.GGFunctionAddingTutorialActivity"
+            android:theme="@style/Theme.悠然GG助手"
+            android:parentActivityName=".MainActivity">
+        </activity>
         <!-- 插件管理Activity -->
         <activity
             android:name=".plugin.PluginManagerActivity"
@@ -113,6 +118,10 @@
         <activity
             android:name=".apktools.ModifierActivity"
             android:label="GGapk生成器">
+        </activity>
+        <activity
+            android:name=".apktools.FunctionManagerActivity"
+            android:label="函数管理">
         </activity>
     </application>
     <queries>

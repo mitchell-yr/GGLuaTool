@@ -62,6 +62,7 @@ import java.util.List;
 import mituran.gglua.tool.apktools.ModifierActivity;
 import mituran.gglua.tool.licenseModel.OpenSourceActivity;
 import mituran.gglua.tool.tutorial.EncryptTutorialActivity;
+import mituran.gglua.tool.tutorial.GGFunctionAddingTutorialActivity;
 import mituran.gglua.tool.tutorial.GGFunctionDocumentViewActivity;
 import mituran.gglua.tool.tutorial.GGTutorialActivity;
 import mituran.gglua.tool.util.ClipboardHelper;
@@ -83,7 +84,7 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
 
     private Button btn_downloadGG,btn_encrypt_tutorial,btn_decrypt_tutorial,btn_gg_apk_generate;
 
-    private LinearLayout  btn_GGDocument,btn_GGTutorial,btn_virtualmachine_decrypt,btn_unluac,btn_tdecompile,btn_gg_decompile;
+    private LinearLayout  btn_GGDocument,btn_GGTutorial,btn_virtualmachine_decrypt,btn_unluac,btn_tdecompile,btn_gg_decompile,btn_gg_addingfunction;
 
     //TDEcompile下载链接
     private String tdecompileDownloadUrl="https://mit0yr.lanzout.com/iDyVa37jjfji";
@@ -145,6 +146,7 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
 
         //卡片3
         btn_gg_apk_generate=view.findViewById(R.id.btn_auto_generate);
+        btn_gg_addingfunction=view.findViewById(R.id.btn_function_add);
 
         // 设置工具栏
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
@@ -319,6 +321,15 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
                 startActivity(intent);
             });
         }
+        //gg修改器函数添加教程
+        if (btn_gg_addingfunction != null) {
+            btn_gg_addingfunction.setOnClickListener(v -> {
+                Intent intent = new Intent();
+                intent.setClass(getContext(), GGFunctionAddingTutorialActivity.class);
+                startActivity(intent);
+            });
+        }
+
 
         card2.setOnClickListener(v -> {
             // 在这里处理卡片2的点击事件

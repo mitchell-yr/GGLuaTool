@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:maxHeight="500dp">
+
+    <!-- 内置函数区域 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="内置函数"
+        android:textColor="@color/purple_700"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:drawableStart="@android:drawable/ic_menu_manage"
+        android:drawablePadding="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:maxHeight="180dp"
+        android:background="#F5F5F5"
+        android:padding="4dp">
+
+        <LinearLayout
+            android:id="@+id/layout_builtin_functions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- 自定义函数区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="自定义函数"
+            android:textColor="@color/purple_700"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:drawableStart="@android:drawable/ic_menu_edit"
+            android:drawablePadding="8dp"/>
+
+
+        <Button
+            android:id="@+id/btn_manage_function"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="管理"
+            android:textColor="@color/purple_700"
+            android:textSize="13sp"
+            android:minWidth="60dp"
+            android:padding="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"/>
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:maxHeight="180dp"
+        android:background="#F5F5F5"
+        android:padding="4dp">
+
+        <LinearLayout
+            android:id="@+id/layout_custom_functions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 自定义函数为空提示 -->
+    <TextView
+        android:id="@+id/tv_no_custom_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="暂无自定义函数，点击「导入」或「新建」添加"
+        android:textColor="#999999"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:visibility="gone"/>
+
+</LinearLayout>

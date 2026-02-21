@@ -38,7 +38,7 @@ public class ResIntValue extends ResScalarValue {
 	}
 
 	@Override
-	protected String encodeAsResValue() throws IOException {
+    public String encodeAsResValue() throws IOException {
 		return TypedValue.coerceToString(type, mValue);
 	}
 

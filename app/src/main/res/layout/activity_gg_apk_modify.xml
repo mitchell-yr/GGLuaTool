@@ -58,7 +58,6 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="12dp"/>
 
-                    <!-- 修改图标 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -84,7 +83,6 @@
                             android:layout_marginStart="12dp"/>
                     </LinearLayout>
 
-                    <!-- 软件名修改 -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -99,7 +97,6 @@
                             android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- 包名修改 -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -114,7 +111,6 @@
                             android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- 版本修改 -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
@@ -154,14 +150,13 @@
                         android:text="删除多余启动入口"
                         android:buttonTint="@color/purple_700"/>
 
-                    <!-- 隐藏区域：单选组 -->
                     <RadioGroup
                         android:id="@+id/rg_entry_type"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:layout_marginStart="32dp"
-                        android:visibility="gone"> <!-- 默认隐藏 -->
+                        android:visibility="gone">
 
                         <RadioButton
                             android:id="@+id/rb_hw_accel"
@@ -203,7 +198,6 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp"/>
 
-                    <!-- 内置脚本 -->
                     <com.google.android.material.checkbox.MaterialCheckBox
                         android:id="@+id/cb_script"
                         android:layout_width="match_parent"
@@ -222,7 +216,6 @@
                         android:layout_marginStart="32dp"
                         android:visibility="gone"/>
 
-                    <!-- 安装包精简 -->
                     <com.google.android.material.checkbox.MaterialCheckBox
                         android:id="@+id/cb_slim"
                         android:layout_width="match_parent"
@@ -246,7 +239,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 4. 函数添加 -->
+            <!-- 4. 函数添加（重新设计） -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -269,17 +262,59 @@
                         android:textStyle="bold"
                         android:buttonTint="@color/purple_700"/>
 
+                    <!-- 展开区域 -->
                     <LinearLayout
                         android:id="@+id/layout_function_list"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginStart="32dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="4dp"
                         android:visibility="gone">
 
-                        <CheckBox android:text="函数1" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
-                        <CheckBox android:text="函数2" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
-                        <CheckBox android:text="函数3" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
+                        <!-- 添加按钮 -->
+                        <Button
+                            android:id="@+id/btn_add_function"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="添加函数"
+                            android:textColor="@color/purple_700"
+                            app:strokeColor="@color/purple_700"
+                            app:icon="@android:drawable/ic_input_add"
+                            app:iconTint="@color/purple_700"
+                            app:iconGravity="textStart" />
+
+                        <!-- 已选择函数标题 -->
+                        <TextView
+                            android:id="@+id/tv_selected_functions_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="已选择的函数"
+                            android:textColor="#666666"
+                            android:textSize="13sp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="4dp"
+                            android:visibility="gone"/>
+
+                        <!-- 无函数提示 -->
+                        <TextView
+                            android:id="@+id/tv_no_functions_hint"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="暂无已选择的函数\n点击上方按钮添加"
+                            android:textColor="#999999"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"/>
+
+                        <!-- 已选择函数列表容器 -->
+                        <LinearLayout
+                            android:id="@+id/layout_selected_functions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -316,14 +351,13 @@
                         android:visibility="gone">
                         <CheckBox android:text="主页美化" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
                         <CheckBox android:text="悬浮窗美化" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/purple_700"/>
-                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- 底部悬浮操作按钮 (FAB) 或 底部栏 -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab_start"
         android:layout_width="wrap_content"

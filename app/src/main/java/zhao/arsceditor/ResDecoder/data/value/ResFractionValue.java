@@ -27,7 +27,7 @@ public class ResFractionValue extends ResIntValue {
 	}
 
 	@Override
-	protected String encodeAsResValue() {
+    public String encodeAsResValue() {
 		return TypedValue.coerceToString(TypedValue.TYPE_FRACTION, mValue);
 	}
 }

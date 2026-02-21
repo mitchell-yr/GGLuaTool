@@ -35,7 +35,7 @@ public abstract class ResScalarValue extends ResIntBasedValue implements GetResV
 		mRawValue = rawValue;
 	}
 
-	protected abstract String encodeAsResValue() throws IOException;
+	public abstract String encodeAsResValue() throws IOException;
 
 	public String encodeAsResXmlItemValue() throws IOException {
 		return encodeResValue();

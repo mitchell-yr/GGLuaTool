@@ -28,7 +28,7 @@ public class ResFloatValue extends ResScalarValue {
 	}
 
 	@Override
-	protected String encodeAsResValue() {
+    public String encodeAsResValue() {
 		return String.valueOf(mValue);
 	}
 

@@ -33,7 +33,7 @@ public class ResReferenceValue extends ResIntValue {
 	}
 
 	@Override
-	protected String encodeAsResValue() throws IOException {
+    public String encodeAsResValue() throws IOException {
 		return String.valueOf(mValue);
 	}
 

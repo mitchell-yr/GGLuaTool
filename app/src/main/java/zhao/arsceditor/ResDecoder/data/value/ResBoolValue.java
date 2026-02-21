@@ -28,7 +28,7 @@ public class ResBoolValue extends ResScalarValue {
 	}
 
 	@Override
-	protected String encodeAsResValue() {
+    public String encodeAsResValue() {
 		return mValue ? "true" : "false";
 	}
 

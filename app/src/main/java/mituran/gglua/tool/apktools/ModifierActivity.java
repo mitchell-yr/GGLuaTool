@@ -6,20 +6,25 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -37,6 +42,10 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import mituran.gglua.tool.R;
 import mituran.gglua.tool.apktools.apksign.KeyStoreGenerator;
@@ -64,6 +73,10 @@ public class ModifierActivity extends AppCompatActivity {
 
     private MaterialCheckBox cbAddFunctions;
     private LinearLayout layoutFunctionList;
+    private Button btnAddFunction;
+    private TextView tvSelectedFunctionsTitle;
+    private TextView tvNoFunctionsHint;
+    private LinearLayout layoutSelectedFunctions;
 
     private MaterialCheckBox cbUiBeautify;
     private LinearLayout layoutUiBeautifyList;
@@ -75,27 +88,89 @@ public class ModifierActivity extends AppCompatActivity {
     private String newIconPath = null;
     private String scriptPath = null;
 
-    // 用于安装完成后重试安装的路径
     private String pendingInstallPath = null;
 
     private ProgressDialog progressDialog;
+
+    // ==================== 函数管理数据 ====================
+
+    /** 函数信息 */
+    public static class FunctionItem {
+        public String name;
+        public String description;
+        public boolean isBuiltin; // true=内置, false=自定义
+
+        public FunctionItem(String name, String description, boolean isBuiltin) {
+            this.name = name;
+            this.description = description;
+            this.isBuiltin = isBuiltin;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            FunctionItem that = (FunctionItem) o;
+            return isBuiltin == that.isBuiltin && name.equals(that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode() * 31 + (isBuiltin ? 1 : 0);
+        }
+    }
+
+    /** 所有可选内置函数 */
+    private final List<FunctionItem> builtinFunctions = new ArrayList<>();
+    /** 所有可选自定义函数 */
+    private final List<FunctionItem> customFunctions = new ArrayList<>();
+    /** 已选中的函数集合 */
+    private final Set<FunctionItem> selectedFunctions = new LinkedHashSet<>();
 
     // ==================== 文件选择器 ====================
     private ActivityResultLauncher<Intent> apkPickerLauncher;
     private ActivityResultLauncher<Intent> iconPickerLauncher;
     private ActivityResultLauncher<Intent> scriptPickerLauncher;
     private ActivityResultLauncher<Intent> installPermissionLauncher;
+    private ActivityResultLauncher<Intent> funcPackPickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gg_apk_modify);
 
+        initFunctionData();
         initViews();
         initLaunchers();
         setupListeners();
 
         showSourceSelectionDialog();
+    }
+
+    private void initFunctionData() {
+        // 内置函数列表（与原来保持一致，按需增删）
+        builtinFunctions.add(new FunctionItem("gg.setSpeed",      "修改游戏速度",   true));
+        builtinFunctions.add(new FunctionItem("gg.searchNumber",  "精确数值搜索",   true));
+        builtinFunctions.add(new FunctionItem("gg.getResults",    "获取搜索结果",   true));
+        builtinFunctions.add(new FunctionItem("gg.editAll",       "批量修改数值",   true));
+        builtinFunctions.add(new FunctionItem("gg.clearResults",  "清除搜索结果",   true));
+        builtinFunctions.add(new FunctionItem("gg.getRangesList", "获取内存范围",   true));
+        builtinFunctions.add(new FunctionItem("gg.setRanges",     "设置搜索范围",   true));
+        builtinFunctions.add(new FunctionItem("gg.getValues",     "读取内存值",     true));
+        builtinFunctions.add(new FunctionItem("gg.setValues",     "写入内存值",     true));
+        builtinFunctions.add(new FunctionItem("gg.toast",         "显示Toast提示",  true));
+
+        // [修改] 自定义函数：从本地 .ggfunc 文件夹加载，而非硬编码
+        loadCustomFunctions();
+    }
+
+    /** 从本地加载所有已安装的自定义函数包并刷新 customFunctions 列表 */
+    private void loadCustomFunctions() {
+        customFunctions.clear();
+        List<CustomFunctionPackage.PackageInfo> locals = CustomFunctionPackage.loadAllLocal();
+        for (CustomFunctionPackage.PackageInfo p : locals) {
+            customFunctions.add(new FunctionItem(p.name, p.description, false));
+        }
     }
 
     private void initViews() {
@@ -127,6 +202,10 @@ public class ModifierActivity extends AppCompatActivity {
 
         cbAddFunctions = findViewById(R.id.cb_add_functions);
         layoutFunctionList = findViewById(R.id.layout_function_list);
+        btnAddFunction = findViewById(R.id.btn_add_function);
+        tvSelectedFunctionsTitle = findViewById(R.id.tv_selected_functions_title);
+        tvNoFunctionsHint = findViewById(R.id.tv_no_functions_hint);
+        layoutSelectedFunctions = findViewById(R.id.layout_selected_functions);
 
         cbUiBeautify = findViewById(R.id.cb_ui_beautify);
         layoutUiBeautifyList = findViewById(R.id.layout_uiBeautify_list);
@@ -173,13 +252,20 @@ public class ModifierActivity extends AppCompatActivity {
                 }
         );
 
-        // ★ 新增：安装未知应用权限回调
         installPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    // 用户从设置页面返回后，重试安装
                     if (pendingInstallPath != null) {
                         installApk(pendingInstallPath);
+                    }
+                }
+        );
+        funcPackPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) handleFuncPackImport(uri);
                     }
                 }
         );
@@ -212,15 +298,259 @@ public class ModifierActivity extends AppCompatActivity {
             layoutSlimOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
 
+        // ★ 函数添加 - 勾选展开/收起
         cbAddFunctions.setOnCheckedChangeListener((buttonView, isChecked) -> {
             layoutFunctionList.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (!isChecked) {
+                // 取消勾选时清空已选函数
+                selectedFunctions.clear();
+                refreshSelectedFunctionsList();
+            }
         });
+
+        // ★ 添加按钮 - 弹出函数选择弹窗
+        btnAddFunction.setOnClickListener(v -> showFunctionPickerDialog());
 
         cbUiBeautify.setOnCheckedChangeListener((buttonView, isChecked) -> {
             layoutUiBeautifyList.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
 
         fabStart.setOnClickListener(v -> startModification());
+    }
+
+    // ==================== ★ 函数选择弹窗 ====================
+
+    private void showFunctionPickerDialog() {
+        android.view.View dialogView = android.view.LayoutInflater.from(this)
+                .inflate(R.layout.dialog_gg_add_function_picker, null);
+
+        android.widget.LinearLayout layoutBuiltin = dialogView.findViewById(R.id.layout_builtin_functions);
+        android.widget.LinearLayout layoutCustom  = dialogView.findViewById(R.id.layout_custom_functions);
+        android.widget.Button btnManage = dialogView.findViewById(R.id.btn_manage_function);
+        android.widget.TextView tvNoCustom = dialogView.findViewById(R.id.tv_no_custom_hint);
+
+        btnManage.setText("管理");
+
+        final java.util.Set<FunctionItem> tempSelected = new java.util.LinkedHashSet<>(selectedFunctions);
+
+        // 填充内置函数
+        for (FunctionItem item : builtinFunctions) {
+            android.widget.CheckBox cb = createFunctionCheckBox(item, tempSelected.contains(item));
+            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) tempSelected.add(item); else tempSelected.remove(item);
+            });
+            layoutBuiltin.addView(cb);
+        }
+
+        // 填充自定义函数
+        if (customFunctions.isEmpty()) {
+            tvNoCustom.setVisibility(android.view.View.VISIBLE);
+        } else {
+            tvNoCustom.setVisibility(android.view.View.GONE);
+            for (FunctionItem item : customFunctions) {
+                android.widget.CheckBox cb = createFunctionCheckBox(item, tempSelected.contains(item));
+                cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    if (isChecked) tempSelected.add(item); else tempSelected.remove(item);
+                });
+                layoutCustom.addView(cb);
+            }
+        }
+
+        androidx.appcompat.app.AlertDialog[] dialogRef = {null};
+        //管理按钮 → 跳转到 FunctionManagerActivity
+        btnManage.setOnClickListener(v -> {
+            if (dialogRef[0] != null) dialogRef[0].dismiss();
+            showFunctionManager();
+        });
+
+
+        // 构建弹窗
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("选择要添加的函数")
+                .setView(dialogView)
+                .setPositiveButton("确定", (d, which) -> {
+                    selectedFunctions.clear();
+                    selectedFunctions.addAll(tempSelected);
+                    refreshSelectedFunctionsList();
+                })
+                .setNegativeButton("取消", null)
+                .create();
+
+        dialogRef[0] = dialog;
+        dialog.show();
+    }
+    /** [新增] 跳转到自定义函数管理界面 */
+    private void showFunctionManager() {
+        android.content.Intent intent = new android.content.Intent(
+                this, FunctionManagerActivity.class);
+        startActivity(intent);
+        // onResume 中重新加载（见下方 onResume）
+    }
+    /** [新增] 打开文件选择器，选择 .ggfunc 文件进行导入 */
+    private void pickFuncPackFile() {
+        android.content.Intent intent = new android.content.Intent(
+                android.content.Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+        funcPackPickerLauncher.launch(
+                android.content.Intent.createChooser(intent, "选择 .ggfunc 函数包"));
+    }
+    /** [新增] 处理从文件选择器返回的 .ggfunc 文件 */
+    private void handleFuncPackImport(android.net.Uri uri) {
+        try {
+            // 1. 获取文件名并校验扩展名
+            String fileName = getFileNameFromUri(uri);
+            if (fileName == null || !fileName.endsWith(CustomFunctionPackage.EXTENSION)) {
+                Toast.makeText(this,
+                        "请选择 " + CustomFunctionPackage.EXTENSION + " 格式的函数包",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 2. 复制到缓存
+            File cacheFile = new File(getCacheDir(),
+                    "import_" + System.currentTimeMillis() + CustomFunctionPackage.EXTENSION);
+            try (InputStream is = getContentResolver().openInputStream(uri);
+                 FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                if (is == null) throw new Exception("无法读取文件");
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = is.read(buf)) > 0) fos.write(buf, 0, len);
+            }
+
+            // 3. 解析函数包
+            CustomFunctionPackage.PackageInfo info = CustomFunctionPackage.importPackage(cacheFile);
+            cacheFile.delete();
+
+            // 4. 检查是否同名已存在
+            boolean exists = false;
+            for (FunctionItem existing : customFunctions) {
+                if (existing.name.equals(info.name)) { exists = true; break; }
+            }
+
+            if (exists) {
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("函数包已存在")
+                        .setMessage("本地已有函数 " + info.name + "，是否覆盖？")
+                        .setPositiveButton("覆盖", (d, w) -> doSaveFuncPack(info))
+                        .setNegativeButton("取消", null)
+                        .show();
+            } else {
+                doSaveFuncPack(info);
+            }
+
+        } catch (Exception e) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("导入失败")
+                    .setMessage(e.getMessage())
+                    .setPositiveButton("确定", null)
+                    .show();
+        }
+    }
+
+    /** [新增] 保存函数包到本地并刷新列表 */
+    private void doSaveFuncPack(CustomFunctionPackage.PackageInfo info) {
+        try {
+            CustomFunctionPackage.saveLocally(info);
+            loadCustomFunctions();   // 刷新 customFunctions 列表
+            Toast.makeText(this, "导入成功：" + info.name, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "保存失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 从 FunctionManagerActivity 返回后刷新自定义函数列表
+        // 同时清除已被删除的函数（避免 selectedFunctions 中存在失效的自定义函数）
+        loadCustomFunctions();
+        cleanupDeletedFromSelected();
+    }
+
+    /** [新增] 清除 selectedFunctions 中本地已不存在的自定义函数 */
+    private void cleanupDeletedFromSelected() {
+        selectedFunctions.removeIf(item -> {
+            if (item.isBuiltin) return false;
+            // 检查该自定义函数是否仍在 customFunctions 中
+            for (FunctionItem f : customFunctions) {
+                if (f.name.equals(item.name)) return false;
+            }
+            return true;  // 已删除，从已选中移除
+        });
+        refreshSelectedFunctionsList();
+    }
+
+    /** 创建弹窗中的函数CheckBox */
+    private CheckBox createFunctionCheckBox(FunctionItem item, boolean checked) {
+        CheckBox cb = new CheckBox(this);
+
+        String displayText = item.name;
+        if (item.description != null && !item.description.isEmpty()) {
+            displayText += "  (" + item.description + ")";
+        }
+        cb.setText(displayText);
+        cb.setChecked(checked);
+        cb.setButtonTintList(getResources().getColorStateList(R.color.purple_700));
+        cb.setTextSize(14);
+        cb.setPadding(4, 4, 4, 4);
+
+        return cb;
+    }
+
+    // ==================== ★ 刷新已选函数列表 ====================
+
+    private void refreshSelectedFunctionsList() {
+        layoutSelectedFunctions.removeAllViews();
+
+        if (selectedFunctions.isEmpty()) {
+            tvNoFunctionsHint.setVisibility(View.VISIBLE);
+            tvSelectedFunctionsTitle.setVisibility(View.GONE);
+        } else {
+            tvNoFunctionsHint.setVisibility(View.GONE);
+            tvSelectedFunctionsTitle.setVisibility(View.VISIBLE);
+            tvSelectedFunctionsTitle.setText("已选择的函数 (" + selectedFunctions.size() + ")");
+
+            for (FunctionItem item : selectedFunctions) {
+                View itemView = LayoutInflater.from(this)
+                        .inflate(R.layout.item_gg_selected_function, layoutSelectedFunctions, false);
+
+                TextView tvBadge = itemView.findViewById(R.id.tv_function_type_badge);
+                TextView tvName = itemView.findViewById(R.id.tv_function_name);
+                ImageButton btnRemove = itemView.findViewById(R.id.btn_remove_function);
+
+                // 设置类型标签
+                if (item.isBuiltin) {
+                    tvBadge.setText("内置");
+                    tvBadge.setBackgroundColor(Color.parseColor("#7B1FA2")); // 紫色
+                } else {
+                    tvBadge.setText("自定义");
+                    tvBadge.setBackgroundColor(Color.parseColor("#00897B")); // 青色
+                }
+
+                // 圆角背景
+                GradientDrawable badgeBg = new GradientDrawable();
+                badgeBg.setCornerRadius(6f);
+                badgeBg.setColor(item.isBuiltin ?
+                        Color.parseColor("#7B1FA2") : Color.parseColor("#00897B"));
+                tvBadge.setBackground(badgeBg);
+
+                // 函数名
+                String displayName = item.name;
+                if (item.description != null && !item.description.isEmpty()) {
+                    displayName += " - " + item.description;
+                }
+                tvName.setText(displayName);
+
+                // 移除按钮 - 点击取消选择
+                btnRemove.setOnClickListener(v -> {
+                    selectedFunctions.remove(item);
+                    refreshSelectedFunctionsList();
+                });
+
+                layoutSelectedFunctions.addView(itemView);
+            }
+        }
     }
 
     // ==================== 来源选择 ====================
@@ -479,7 +809,12 @@ public class ModifierActivity extends AppCompatActivity {
     }
 
     private ModifyOptions collectModifyOptions() {
+
+
+
         ModifyOptions options = new ModifyOptions();
+
+        options.functionEntries = buildFunctionEntries();
 
         options.apkPath = apkPath;
 
@@ -505,9 +840,40 @@ public class ModifierActivity extends AppCompatActivity {
         }
 
         options.addFunctions = cbAddFunctions.isChecked();
+        if (options.addFunctions) {
+            options.selectedFunctionNames = new ArrayList<>();
+            options.functionEntries = buildFunctionEntries();
+            for (FunctionItem item : selectedFunctions) {
+                options.selectedFunctionNames.add(
+                        (item.isBuiltin ? "[内置]" : "[自定义]") + " " + item.name);
+            }
+        }
+
         options.uiBeautify = cbUiBeautify.isChecked();
 
         return options;
+    }
+    /** [新增] 把 selectedFunctions 转换为 GgFunctionAdder.FunctionEntry 列表 */
+    private List<GgFunctionAdder.FunctionEntry> buildFunctionEntries() {
+        List<GgFunctionAdder.FunctionEntry> entries = new ArrayList<>();
+        // 加载本地包信息以便获取 smali 内容
+        List<CustomFunctionPackage.PackageInfo> localPkgs = CustomFunctionPackage.loadAllLocal();
+
+        for (FunctionItem item : selectedFunctions) {
+            if (item.isBuiltin) {
+                entries.add(new GgFunctionAdder.FunctionEntry(item.name));
+            } else {
+                // 找对应的本地包
+                CustomFunctionPackage.PackageInfo pkg = null;
+                for (CustomFunctionPackage.PackageInfo p : localPkgs) {
+                    if (p.name.equals(item.name)) { pkg = p; break; }
+                }
+                if (pkg != null) {
+                    entries.add(pkg.toFunctionEntry());
+                }
+            }
+        }
+        return entries;
     }
 
     private String getText(TextInputEditText editText) {
@@ -540,7 +906,11 @@ public class ModifierActivity extends AppCompatActivity {
             summary.append("• 精简APK: 是\n");
         }
         if (options.addFunctions) {
-            summary.append("• 函数添加: 是\n");
+            summary.append("• 函数添加: 是 (").append(selectedFunctions.size()).append("个)\n");
+            for (FunctionItem item : selectedFunctions) {
+                summary.append("    - ").append(item.isBuiltin ? "[内置]" : "[自定义]")
+                        .append(" ").append(item.name).append("\n");
+            }
         }
         if (options.uiBeautify) {
             summary.append("• UI美化: 是\n");
@@ -915,11 +1285,8 @@ public class ModifierActivity extends AppCompatActivity {
         }
     }
 
-    // ==================== ★ 修改部分：成功对话框 + 安装APK + 打开目录 ====================
+    // ==================== 成功/错误对话框 + 安装 + 打开目录 ====================
 
-    /**
-     * 显示成功对话框（分享APK → 安装APK）
-     */
     private void showSuccessDialog(String outputPath) {
         new AlertDialog.Builder(this)
                 .setTitle("修改成功")
@@ -934,10 +1301,6 @@ public class ModifierActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * 安装APK文件
-     * 处理 Android 7.0+ FileProvider 和 Android 8.0+ 未知来源安装权限
-     */
     private void installApk(String apkFilePath) {
         try {
             File apkFile = new File(apkFilePath);
@@ -946,10 +1309,8 @@ public class ModifierActivity extends AppCompatActivity {
                 return;
             }
 
-            // Android 8.0+ 检查是否允许安装未知来源应用
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (!getPackageManager().canRequestPackageInstalls()) {
-                    // 保存待安装路径，权限授予后自动重试
                     pendingInstallPath = apkFilePath;
 
                     new AlertDialog.Builder(this)
@@ -969,7 +1330,6 @@ public class ModifierActivity extends AppCompatActivity {
                 }
             }
 
-            // 清除待安装标记
             pendingInstallPath = null;
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -977,13 +1337,11 @@ public class ModifierActivity extends AppCompatActivity {
 
             Uri apkUri;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                // Android 7.0+ 使用 FileProvider
                 try {
                     apkUri = FileProvider.getUriForFile(this,
                             getPackageName() + ".fileprovider", apkFile);
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 } catch (IllegalArgumentException e) {
-                    // FileProvider 未正确配置，使用兼容方案
                     StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
                     StrictMode.setVmPolicy(builder.build());
                     apkUri = Uri.fromFile(apkFile);
@@ -1001,10 +1359,6 @@ public class ModifierActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 打开文件所在目录
-     * 多种方式尝试，确保兼容各种设备和文件管理器
-     */
     private void openFileDirectory(String filePath) {
         File file = new File(filePath);
         File directory = file.getParentFile();
@@ -1016,10 +1370,8 @@ public class ModifierActivity extends AppCompatActivity {
 
         String dirPath = directory.getAbsolutePath();
 
-        // 方法1: Android 8.0+ 使用 DocumentsContract 打开系统文件管理器到指定目录
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                // 将绝对路径转为 externalstorage 的相对路径
                 String relativePath = dirPath
                         .replaceFirst("^/storage/emulated/0/", "")
                         .replaceFirst("^/sdcard/", "");
@@ -1041,7 +1393,6 @@ public class ModifierActivity extends AppCompatActivity {
             }
         }
 
-        // 方法2: 尝试用 file:// URI 打开第三方文件管理器
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.parse("file://" + dirPath), "resource/folder");
@@ -1054,7 +1405,6 @@ public class ModifierActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // 方法3: 尝试直接用 ACTION_VIEW 打开目录（部分文件管理器支持）
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.parse("file://" + dirPath + "/"), "*/*");
@@ -1067,7 +1417,6 @@ public class ModifierActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // 方法4: 打开系统文件管理器（不指定目录，但至少能打开）
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("content://com.android.externalstorage.documents/root/primary"));
@@ -1082,7 +1431,6 @@ public class ModifierActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // 最终回退: 复制路径到剪贴板
         try {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             if (clipboard != null) {
@@ -1097,8 +1445,6 @@ public class ModifierActivity extends AppCompatActivity {
         }
     }
 
-    // ==================== 错误对话框 ====================
-
     private void showErrorDialog(String error) {
         new AlertDialog.Builder(this)
                 .setTitle("修改失败")
@@ -1110,6 +1456,8 @@ public class ModifierActivity extends AppCompatActivity {
     // ==================== 修改选项数据类 ====================
 
     public static class ModifyOptions {
+
+        public List<GgFunctionAdder.FunctionEntry> functionEntries;
         public String apkPath;
 
         public String newAppName;
@@ -1130,6 +1478,7 @@ public class ModifierActivity extends AppCompatActivity {
         public boolean slimDex;
 
         public boolean addFunctions;
+        public List<String> selectedFunctionNames; // ★ 新增：已选函数名列表
 
         public boolean uiBeautify;
 
@@ -1145,6 +1494,7 @@ public class ModifierActivity extends AppCompatActivity {
                     ", embedScript=" + embedScript +
                     ", slimApk=" + slimApk +
                     ", addFunctions=" + addFunctions +
+                    ", selectedFunctions=" + (selectedFunctionNames != null ? selectedFunctionNames.size() : 0) +
                     ", uiBeautify=" + uiBeautify +
                     '}';
         }

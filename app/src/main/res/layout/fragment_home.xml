@@ -202,14 +202,11 @@
 
                                     </LinearLayout>
 
-                                    <com.google.android.material.chip.Chip
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="24dp"
-                                        android:text="新手"
-                                        android:textColor="#FF6F00"
-                                        android:textSize="10sp"
-                                        app:chipBackgroundColor="#FFF3E0FF"
-                                        app:chipMinHeight="24dp" />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
 
                                 </LinearLayout>
 
@@ -295,67 +292,6 @@
 
                             </com.google.android.material.card.MaterialCardView>
 
-                            <!-- 教程按钮 -->
-
-                            <!-- 底部快捷操作 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:orientation="horizontal">
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_forum"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:layout_marginEnd="4dp"
-                                    android:text="社区"
-                                    android:textColor="#7E57C2"
-                                    android:textSize="13sp"
-                                    app:icon="@drawable/ic_forum"
-                                    app:iconGravity="textStart"
-                                    app:iconPadding="4dp"
-                                    app:iconSize="16dp"
-                                    app:iconTint="#7E57C2"
-                                    app:rippleColor="#E8EAF6" />
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_video"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:layout_marginHorizontal="4dp"
-                                    android:text="视频"
-                                    android:textColor="#7E57C2"
-                                    android:textSize="13sp"
-                                    app:icon="@drawable/ic_video"
-                                    app:iconGravity="textStart"
-                                    app:iconPadding="4dp"
-                                    app:iconSize="16dp"
-                                    app:iconTint="#7E57C2"
-                                    app:rippleColor="#E8EAF6" />
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_faq"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="40dp"
-                                    android:layout_weight="1"
-                                    android:layout_marginStart="4dp"
-                                    android:text="FAQ"
-                                    android:textColor="#7E57C2"
-                                    android:textSize="13sp"
-                                    app:icon="@drawable/ic_help"
-                                    app:iconGravity="textStart"
-                                    app:iconPadding="4dp"
-                                    app:iconSize="16dp"
-                                    app:iconTint="#7E57C2"
-                                    app:rippleColor="#E8EAF6" />
-
-                            </LinearLayout>
 
                         </LinearLayout>
 
@@ -559,14 +495,11 @@
 
                                     </LinearLayout>
 
-                                    <com.google.android.material.chip.Chip
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="24dp"
-                                        android:text="推荐"
-                                        android:textColor="#6200EE"
-                                        android:textSize="10sp"
-                                        app:chipBackgroundColor="#E8EAF6"
-                                        app:chipMinHeight="24dp" />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_forward"
+                                        app:tint="#BDBDBD" />
 
                                 </LinearLayout>
 
@@ -1014,27 +947,6 @@
 
                                 </LinearLayout>
 
-                                <!-- 第二行：浏览内置函数 - 透明背景带边框按钮 -->
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_browse_functions"
-                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:paddingVertical="8dp"
-                                    android:text="浏览可添加内置函数"
-                                    android:textAllCaps="false"
-                                    android:textColor="#5E35B1"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold"
-                                    app:cornerRadius="8dp"
-                                    app:icon="@drawable/ic_library"
-                                    app:iconGravity="textStart"
-                                    app:iconPadding="8dp"
-                                    app:iconSize="24dp"
-                                    app:iconTint="#6200EE"
-                                    app:rippleColor="#E8EAF6"
-                                    app:strokeColor="#B39DDB"
-                                    app:strokeWidth="1dp" />
 
                             </LinearLayout>
 
@@ -1098,33 +1010,6 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <!-- 状态信息 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <TextView
-                                    android:id="@+id/tv_vf_status"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:layout_marginTop="4dp"
-                                    android:text="未安装 • 推荐使用 • 提升兼容性"
-                                    android:textColor="#9E9E9E"
-                                    android:textSize="11sp" />
-
-                                <com.google.android.material.chip.Chip
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="24dp"
-                                    android:text="推荐"
-                                    android:textColor="#1B5E20"
-                                    android:textSize="10sp"
-                                    app:chipBackgroundColor="#E8F5E9"
-                                    app:chipMinHeight="24dp" />
-
-                            </LinearLayout>
 
                             <!-- 主要操作按钮 -->
                             <com.google.android.material.button.MaterialButton

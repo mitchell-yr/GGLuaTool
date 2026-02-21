@@ -59,6 +59,8 @@ dependencies {
     //implementation("org.apktool:apktool-lib:2.12.1")//使用maven上的apktool无法解决平台识别报错java.lang.ExceptionInInitializerError at brut.util.OSDetection.isMacOSX(OSDetection.java)
     //implementation 'com.github.apk-editor:aXML:21e167dc5372510e6c1877e7b6c6a01eff1b3a58'//用于manifest等xml编辑
     implementation (project(':library'))//内含axml
+    implementation 'com.android.tools.smali:smali:3.0.9'
+    implementation 'com.android.tools.smali:smali-baksmali:3.0.9'
     implementation 'com.android.tools.smali:smali-dexlib2:3.0.9'//dex编辑用
     implementation 'com.google.code.findbugs:jsr305:3.0.2'//用于import javax.annotation.Nonnull;
 

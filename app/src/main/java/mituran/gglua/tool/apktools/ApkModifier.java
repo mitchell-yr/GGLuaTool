@@ -1,9 +1,12 @@
 package mituran.gglua.tool.apktools;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.RequiresApi;
 
@@ -19,7 +22,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -27,6 +32,11 @@ import java.util.zip.ZipOutputStream;
 
 import mituran.gglua.tool.apktools.apksign.ApkSignerWrapper;
 import mituran.gglua.tool.apktools.apksign.SignatureConfig;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import mituran.gglua.tool.apktools.ScriptEmbedder;
 
 /**
  * APK修改器（修复版）
@@ -89,6 +99,17 @@ public class ApkModifier {
 
             callback.onProgress("修改应用图标...");
             modifyIcon(extractedDir);
+
+            if (mOptions.embedScript && mOptions.scriptPath != null) {
+                callback.onProgress("嵌入脚本...");
+                embedScript(extractedDir, mOptions.scriptPath);
+            }
+
+            if (mOptions.addFunctions && mOptions.functionEntries != null && !mOptions.functionEntries.isEmpty()) {
+                callback.onProgress("注入 GG 函数...");
+                addGgFunctions(extractedDir, mOptions.functionEntries);
+            }
+
 
             callback.onProgress("重新打包APK...");
             final File unsignedApk = repackApk(extractedDir);
@@ -300,6 +321,118 @@ public class ApkModifier {
         } catch (Exception e) {
             android.util.Log.e("ApkModifier", "ARSC修改失败", e);
         }
+    }
+
+    /**
+     * 将用户脚本嵌入 DEX 中的 hy 类（android.ext 路径）。
+     *
+     * @param extractedDir APK 解压目录
+     * @param scriptPath   用户选择的 .lua 脚本文件路径
+     */
+    private void embedScript(File extractedDir, String scriptPath) throws IOException {
+        // 读取脚本内容
+        File scriptFile = new File(scriptPath);
+        if (!scriptFile.exists()) {
+            throw new IOException("脚本文件不存在: " + scriptPath);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new java.io.FileInputStream(scriptFile),
+                        StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+        }
+        String scriptContent = sb.toString().trim();
+
+        if (scriptContent.isEmpty()) {
+            throw new IOException("脚本文件内容为空");
+        }
+
+        android.util.Log.d("ApkModifier", "脚本内容长度: " + scriptContent.length() + " chars");
+
+        // 调用 ScriptEmbedder 完成注入
+        ScriptEmbedder embedder = new ScriptEmbedder(mContext);
+        embedder.embed(extractedDir, scriptContent, mWorkDir);
+
+        android.util.Log.d("ApkModifier", "脚本嵌入完成");
+    }
+
+    /**
+     * [新增 - 放入 ApkModifier.java]
+     * 向解压后的 APK 注入 GG 函数（在 Script 类中注册并添加内部类）。
+     * 会自动检测 GG 版本（VERSION_96 / VERSION_101），并按版本选择 smali。
+     * 对于自定义函数：若目标版本的 smali 不存在，弹窗询问是否强行添加。
+     *
+     * @param extractedDir APK 解压目录
+     * @param entries      要注入的函数列表
+     */
+    private void addGgFunctions(File extractedDir,
+                                List<GgFunctionAdder.FunctionEntry> entries) throws IOException {
+        // 读取 GG 版本
+        File arscFile = new File(extractedDir, "resources.arsc");
+        String version = detectGgVersion(arscFile);
+        android.util.Log.d("ApkModifier", "GG 版本: " + version);
+
+        // 过滤出无法用于该版本的自定义函数，并处理弹窗
+        // 注意：此方法在子线程调用，强行添加弹窗需通过 CountDownLatch 同步
+        List<GgFunctionAdder.FunctionEntry> toAdd = new ArrayList<>();
+
+        for (GgFunctionAdder.FunctionEntry entry : entries) {
+            if (entry.isBuiltin) {
+                toAdd.add(entry);
+                continue;
+            }
+            boolean hasSmali =
+                    (GgFunctionAdder.VERSION_96.equals(version)  && entry.smali96 != null)
+                 || (GgFunctionAdder.VERSION_101.equals(version) && entry.smali101 != null);
+
+            if (hasSmali) {
+                toAdd.add(entry);
+            } else {
+                // 弹窗询问（需要在主线程）
+                boolean[] choice = {false};
+                CountDownLatch latch = new CountDownLatch(1);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    new AlertDialog.Builder(mContext)
+                            .setTitle("版本不兼容")
+                            .setMessage("函数 " + entry.name + " 没有适用于 "
+                                    + version + " 版的 smali，\n"
+                                    + "是否仍然强行添加（可能无法正常工作）？")
+                            .setPositiveButton("强行添加", (d, w) -> {
+                                choice[0] = true;
+                                latch.countDown();
+                            })
+                            .setNegativeButton("取消添加", (d, w) -> latch.countDown())
+                            .setCancelable(false)
+                            .show();
+                });
+
+                try { latch.await(); } catch (InterruptedException ignored) {}
+                if (choice[0]) toAdd.add(entry);
+            }
+        }
+
+        if (!toAdd.isEmpty()) {
+            GgFunctionAdder adder = new GgFunctionAdder(mContext);
+            adder.addFunctions(extractedDir, toAdd, version, mWorkDir);
+        }
+    }
+
+    // 检测 GG 版本（复用 ScriptEmbedder 的检测逻辑）
+    private String detectGgVersion(File arscFile) throws IOException {
+        ScriptEmbedder embedder = new ScriptEmbedder(mContext);
+        // ScriptEmbedder 没有公开 readVersionNumber，直接用 ArscEditor 回退方法
+        ArscEditor editor = new ArscEditor(arscFile);
+        List<String> strings = editor.getAllStrings();
+        for (String s : strings) {
+            if (ScriptEmbedder.VERSION_96.equals(s))  return ScriptEmbedder.VERSION_96;
+            if (ScriptEmbedder.VERSION_101.equals(s)) return ScriptEmbedder.VERSION_101;
+        }
+        throw new IOException("无法从 resources.arsc 检测 GG 版本");
     }
 
     /**

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="1dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <!-- 函数类型标识 -->
+        <TextView
+            android:id="@+id/tv_function_type_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="内置"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:background="@color/purple_700"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp" />
+
+        <!-- 函数名称 -->
+        <TextView
+            android:id="@+id/tv_function_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="函数名称"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginStart="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <!-- 移除按钮 -->
+        <ImageButton
+            android:id="@+id/btn_remove_function"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="移除"
+            android:scaleType="centerInside"
+            android:padding="6dp"/>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
