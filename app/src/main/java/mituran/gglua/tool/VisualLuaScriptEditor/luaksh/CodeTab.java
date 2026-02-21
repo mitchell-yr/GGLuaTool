@@ -19,29 +19,34 @@ public class CodeTab {
         this.name = name;
         this.type = type;
         this.codeBlocks = new ArrayList<>();
-
-        // 添加起始代码块
-        addStartBlock();
     }
 
-    // 添加起始代码块
-    private void addStartBlock() {
+    // 添加起始代码块（仅在创建新Tab时调用）
+    public void addStartBlock() {
+        // 检查是否已经有起始块，避免重复添加
+        if (!codeBlocks.isEmpty()) {
+            CodeBlockType firstType = codeBlocks.get(0).getType();
+            if (firstType == CodeBlockType.MAIN_START || firstType == CodeBlockType.FUNCTION_START) {
+                return; // 已经有起始块，不重复添加
+            }
+        }
+
         if (type == TabType.MAIN) {
             // 主程序起始块
             CodeBlock startBlock = new CodeBlock(
-                    CodeBlockType.COMMENT,
-                    "-- 主程序开始",
+                    CodeBlockType.MAIN_START,
+                    "",
                     0
             );
-            codeBlocks.add(startBlock);
+            codeBlocks.add(0, startBlock);
         } else {
             // 函数起始块
             CodeBlock startBlock = new CodeBlock(
-                    CodeBlockType.COMMENT,
-                    "-- 函数: " + name,
+                    CodeBlockType.FUNCTION_START,
+                    "",
                     0
             );
-            codeBlocks.add(startBlock);
+            codeBlocks.add(0, startBlock);
         }
     }
 
@@ -69,18 +74,30 @@ public class CodeTab {
         this.codeBlocks = codeBlocks;
     }
 
-    // 生成函数定义代码
-    public String generateFunctionDefinition() {
-        if (type == TabType.FUNCTION && !codeBlocks.isEmpty()) {
-            return "function " + name + "\n";
+    /**
+     * 获取函数参数（从FUNCTION_START块中获取）
+     */
+    public String getFunctionParams() {
+        if (type != TabType.FUNCTION || codeBlocks.isEmpty()) {
+            return "";
         }
+
+        CodeBlock firstBlock = codeBlocks.get(0);
+        if (firstBlock.getType() == CodeBlockType.FUNCTION_START) {
+            List<CodeBlockStructure.Part> parts = firstBlock.getParts();
+            return CodeBlockStructure.getInputValueWithDefault(parts, 0, "");
+        }
+
         return "";
     }
 
-    // 生成函数结束代码
-    public String generateFunctionEnd() {
-        if (type == TabType.FUNCTION && !codeBlocks.isEmpty()) {
-            return "end\n";
+    /**
+     * 生成函数定义头（包含参数）
+     */
+    public String generateFunctionHeader() {
+        if (type == TabType.FUNCTION) {
+            String params = getFunctionParams();
+            return "function " + name + "(" + params + ")";
         }
         return "";
     }

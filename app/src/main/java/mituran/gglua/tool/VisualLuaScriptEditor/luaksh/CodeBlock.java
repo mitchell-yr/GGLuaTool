@@ -5,15 +5,14 @@ import java.util.List;
 
 public class CodeBlock {
     private CodeBlockType type;
-    private String value;  // 保留用于兼容
+    private String value;
     private int indentLevel;
-    private List<CodeBlockStructure.Part> parts;  // 新的结构化内容
+    private List<CodeBlockStructure.Part> parts;
 
     public CodeBlock(CodeBlockType type, String value, int indentLevel) {
         this.type = type;
         this.value = value;
         this.indentLevel = indentLevel;
-        // 初始化parts结构
         this.parts = CodeBlockStructure.parseOldValue(type, value);
     }
 
@@ -31,7 +30,6 @@ public class CodeBlock {
 
     public void setValue(String value) {
         this.value = value;
-        // 更新parts
         this.parts = CodeBlockStructure.parseOldValue(type, value);
     }
 
@@ -54,20 +52,21 @@ public class CodeBlock {
         this.indentLevel = indentLevel;
     }
 
-    // 生成Lua代码
     public String generateCode() {
+        if (type.isSpecialStartBlock()) {
+            return null;
+        }
+
         if (parts != null && !parts.isEmpty()) {
             return CodeBlockStructure.generateCode(type, parts);
         }
 
-        // 兼容旧的生成方式
+        // 兼容旧的生成方式（不再包含INPUT）
         switch (type) {
             case COMMENT:
-                return value;
+                return "-- " + value;
             case PRINT:
                 return "print(" + value + ")";
-            case INPUT:
-                return value + " = io.read()";
             case VARIABLE_ASSIGN:
                 return value;
             case VARIABLE_DECLARE:
@@ -109,7 +108,6 @@ public class CodeBlock {
         }
     }
 
-    // 复制代码块
     public CodeBlock copy() {
         CodeBlock newBlock = new CodeBlock(this.type, this.value, this.indentLevel);
         if (this.parts != null) {

@@ -1,6 +1,5 @@
 package mituran.gglua.tool.VisualLuaScriptEditor.luaksh;
 
-import android.content.Context;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -8,38 +7,26 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 项目保存和加载管理器
- * 保存格式：JSON（易于读取和编辑）
- * 文件名：code.json
  */
 public class ProjectManager {
     private static final String FILE_NAME = "code.json";
 
-    /**
-     * 保存项目到指定路径
-     * @param path 保存路径
-     * @param tabs 所有标签页
-     * @return 是否保存成功
-     */
     public static boolean saveProject(String path, List<CodeTab> tabs) {
         try {
-            // 确保目录存在
             File dir = new File(path);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
 
-            // 创建保存文件
             File file = new File(path, FILE_NAME);
 
-            // 构建JSON数据
             JSONObject root = new JSONObject();
-            root.put("version", "2.2");
+            root.put("version", "2.3");
             root.put("timestamp", System.currentTimeMillis());
 
             JSONArray tabsArray = new JSONArray();
@@ -48,9 +35,8 @@ public class ProjectManager {
             }
             root.put("tabs", tabsArray);
 
-            // 写入文件
             FileWriter writer = new FileWriter(file);
-            writer.write(root.toString(2)); // 缩进2空格，便于阅读
+            writer.write(root.toString(2));
             writer.close();
 
             return true;
@@ -60,21 +46,14 @@ public class ProjectManager {
         }
     }
 
-    /**
-     * 从指定路径加载项目
-     * @param path 加载路径
-     * @return 标签页列表，如果失败返回null
-     */
     public static List<CodeTab> loadProject(String path) {
         try {
             File file = new File(path, FILE_NAME);
 
-            // 如果文件不存在，返回null
             if (!file.exists()) {
                 return null;
             }
 
-            // 读取文件
             StringBuilder content = new StringBuilder();
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
@@ -83,7 +62,6 @@ public class ProjectManager {
             }
             reader.close();
 
-            // 解析JSON
             JSONObject root = new JSONObject(content.toString());
             JSONArray tabsArray = root.getJSONArray("tabs");
 
@@ -103,9 +81,6 @@ public class ProjectManager {
         }
     }
 
-    /**
-     * 将CodeTab转换为JSON
-     */
     private static JSONObject tabToJson(CodeTab tab) throws JSONException {
         JSONObject json = new JSONObject();
         json.put("id", tab.getId());
@@ -121,15 +96,11 @@ public class ProjectManager {
         return json;
     }
 
-    /**
-     * 将CodeBlock转换为JSON
-     */
     private static JSONObject blockToJson(CodeBlock block) throws JSONException {
         JSONObject json = new JSONObject();
         json.put("type", block.getType().name());
         json.put("indentLevel", block.getIndentLevel());
 
-        // 保存parts结构
         JSONArray partsArray = new JSONArray();
         List<CodeBlockStructure.Part> parts = block.getParts();
         if (parts != null) {
@@ -146,9 +117,6 @@ public class ProjectManager {
         return json;
     }
 
-    /**
-     * 从JSON转换为CodeTab
-     */
     private static CodeTab jsonToTab(JSONObject json) throws JSONException {
         String id = json.getString("id");
         String name = json.getString("name");
@@ -160,29 +128,49 @@ public class ProjectManager {
 
         // 加载代码块
         JSONArray blocksArray = json.getJSONArray("blocks");
+        List<CodeBlock> blocks = tab.getCodeBlocks();
+
         for (int i = 0; i < blocksArray.length(); i++) {
             JSONObject blockJson = blocksArray.getJSONObject(i);
             CodeBlock block = jsonToBlock(blockJson);
             if (block != null) {
-                tab.getCodeBlocks().add(block);
+                blocks.add(block);
             }
+        }
+
+        // 确保有起始块（处理旧版本数据）
+        if (blocks.isEmpty() || !blocks.get(0).getType().isSpecialStartBlock()) {
+            // 如果没有起始块或第一个块不是特殊起始块，添加新的起始块
+            tab.addStartBlock();
         }
 
         return tab;
     }
 
-    /**
-     * 从JSON转换为CodeBlock
-     */
     private static CodeBlock jsonToBlock(JSONObject json) throws JSONException {
         String typeStr = json.getString("type");
+
+        // 处理旧版本数据：将旧的COMMENT起始块转换为新的特殊起始块
+        // 跳过旧版本的注释起始块（它们会被新的起始块替代）
+        if (typeStr.equals("COMMENT")) {
+            if (json.has("parts")) {
+                JSONArray partsArray = json.getJSONArray("parts");
+                for (int i = 0; i < partsArray.length(); i++) {
+                    JSONObject partJson = partsArray.getJSONObject(i);
+                    String value = partJson.optString("value", "");
+                    // 检查是否是旧的起始注释块
+                    if (value.contains("主程序开始") || value.contains("函数:") || value.contains("函数：")) {
+                        return null; // 跳过这个块，它会被新的起始块替代
+                    }
+                }
+            }
+        }
+
         CodeBlockType type = CodeBlockType.valueOf(typeStr);
         int indentLevel = json.getInt("indentLevel");
 
-        // 创建代码块
         CodeBlock block = new CodeBlock(type, "", indentLevel);
 
-        // 加载parts
         if (json.has("parts")) {
             JSONArray partsArray = json.getJSONArray("parts");
             List<CodeBlockStructure.Part> parts = new ArrayList<>();
@@ -207,17 +195,11 @@ public class ProjectManager {
         return block;
     }
 
-    /**
-     * 检查保存文件是否存在
-     */
     public static boolean projectExists(String path) {
         File file = new File(path, FILE_NAME);
         return file.exists();
     }
 
-    /**
-     * 删除保存文件
-     */
     public static boolean deleteProject(String path) {
         File file = new File(path, FILE_NAME);
         if (file.exists()) {

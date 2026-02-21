@@ -41,7 +41,7 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(   R.layout.visual_lua_script_editor_item_code_block, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.visual_lua_script_editor_item_code_block, parent, false);
         return new ViewHolder(view);
     }
 
@@ -52,7 +52,7 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
         // 清除之前的内容
         holder.contentContainer.removeAllViews();
 
-        // 获取代码块颜色（END块需要匹配对应的开始块颜色）
+        // 获取代码块颜色
         String blockColor = getBlockColor(block, position);
 
         // 设置背景颜色
@@ -60,24 +60,32 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
         drawable.setShape(GradientDrawable.RECTANGLE);
         drawable.setColor(Color.parseColor(blockColor));
         drawable.setCornerRadius(8);
+
+        // 特殊起始块添加边框效果
+        if (block.getType().isSpecialStartBlock()) {
+            drawable.setStroke(2, Color.parseColor("#FFFFFF"));
+        }
+
         holder.blockContainer.setBackground(drawable);
 
-        // 设置缩进（增加缩进距离，使层级更清晰）
-        int indentDp = block.getIndentLevel() * 32;  // 从20改为32
-
-        // 分支指示器宽度固定为20dp，所有块左对齐
+        // 设置缩进
+        int indentDp = block.getIndentLevel() * 32;
         int indicatorWidth = 20;
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) holder.blockContainer.getLayoutParams();
         params.setMargins(dpToPx(indentDp + 8), dpToPx(1), dpToPx(8), dpToPx(1));
         holder.blockContainer.setLayoutParams(params);
 
-        // 设置分支指示器（始终占位，保证左对齐）
+        // 设置分支指示器
         LinearLayout.LayoutParams indicatorParams = (LinearLayout.LayoutParams) holder.branchIndicator.getLayoutParams();
         indicatorParams.width = dpToPx(indicatorWidth);
         holder.branchIndicator.setLayoutParams(indicatorParams);
 
-        if (block.getType().isBlockStart()) {
+        if (block.getType().isSpecialStartBlock()) {
+            // 特殊起始块显示特殊图标
+            holder.branchIndicator.setVisibility(View.VISIBLE);
+            holder.branchIndicator.setText("★");
+        } else if (block.getType().isBlockStart()) {
             holder.branchIndicator.setVisibility(View.VISIBLE);
             holder.branchIndicator.setText("▼");
         } else if (block.getType().isBlockMiddle()) {
@@ -87,7 +95,7 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
             holder.branchIndicator.setVisibility(View.VISIBLE);
             holder.branchIndicator.setText("▲");
         } else {
-            holder.branchIndicator.setVisibility(View.INVISIBLE);  // 改为INVISIBLE保持占位
+            holder.branchIndicator.setVisibility(View.INVISIBLE);
             holder.branchIndicator.setText("");
         }
 
@@ -97,17 +105,15 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
             CodeBlockStructure.Part part = parts.get(i);
 
             if (part.type == CodeBlockStructure.PartType.LABEL) {
-                // 添加标签
                 TextView label = createLabel(part.text);
                 holder.contentContainer.addView(label);
             } else {
-                // 添加输入框
                 EditText input = createInput(part, i, block, position);
                 holder.contentContainer.addView(input);
             }
         }
 
-        // 设置点击监听（在blockContainer上而不是itemView上）
+        // 设置点击监听
         holder.blockContainer.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onBlockClick(position);
@@ -122,47 +128,36 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
         });
     }
 
-    /**
-     * 获取代码块的颜色
-     * END块和UNTIL块需要匹配对应的开始块颜色
-     */
     private String getBlockColor(CodeBlock block, int position) {
         CodeBlockType type = block.getType();
 
-        // 如果不是结束块，直接返回默认颜色
         if (!type.isBlockEnd()) {
             return type.getColor();
         }
 
-        // 是结束块，需要找到对应的开始块
         String matchingColor = findMatchingStartBlockColor(position);
         return matchingColor != null ? matchingColor : type.getColor();
     }
 
-    /**
-     * 向前查找匹配的开始块颜色
-     */
     private String findMatchingStartBlockColor(int endPosition) {
         int depth = 0;
 
-        // 从当前位置向前查找
         for (int i = endPosition - 1; i >= 0; i--) {
             CodeBlock block = codeBlocks.get(i);
             CodeBlockType type = block.getType();
 
             if (type.isBlockEnd()) {
-                depth++;  // 遇到另一个结束块，深度+1
+                depth++;
             } else if (type.isBlockStart()) {
                 if (depth == 0) {
-                    // 找到匹配的开始块
                     return type.getColor();
                 } else {
-                    depth--;  // 这是其他结束块的开始块
+                    depth--;
                 }
             }
         }
 
-        return null;  // 没找到匹配的开始块
+        return null;
     }
 
     private TextView createLabel(String text) {
@@ -196,13 +191,10 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
         params.setMargins(dpToPx(2), 0, dpToPx(2), 0);
         input.setLayoutParams(params);
 
-        // 阻止点击事件冒泡到父容器
         input.setOnClickListener(v -> {
-            // 点击输入框时不触发代码块的点击事件
             v.requestFocus();
         });
 
-        // 监听文本变化
         input.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
