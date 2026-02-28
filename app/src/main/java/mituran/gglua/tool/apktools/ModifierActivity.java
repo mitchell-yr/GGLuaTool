@@ -149,16 +149,7 @@ public class ModifierActivity extends AppCompatActivity {
 
     private void initFunctionData() {
         // 内置函数列表（与原来保持一致，按需增删）
-        builtinFunctions.add(new FunctionItem("gg.setSpeed",      "修改游戏速度",   true));
-        builtinFunctions.add(new FunctionItem("gg.searchNumber",  "精确数值搜索",   true));
-        builtinFunctions.add(new FunctionItem("gg.getResults",    "获取搜索结果",   true));
-        builtinFunctions.add(new FunctionItem("gg.editAll",       "批量修改数值",   true));
-        builtinFunctions.add(new FunctionItem("gg.clearResults",  "清除搜索结果",   true));
-        builtinFunctions.add(new FunctionItem("gg.getRangesList", "获取内存范围",   true));
-        builtinFunctions.add(new FunctionItem("gg.setRanges",     "设置搜索范围",   true));
-        builtinFunctions.add(new FunctionItem("gg.getValues",     "读取内存值",     true));
-        builtinFunctions.add(new FunctionItem("gg.setValues",     "写入内存值",     true));
-        builtinFunctions.add(new FunctionItem("gg.toast",         "显示Toast提示",  true));
+        builtinFunctions.add(new FunctionItem("test",      "测试",   true));
 
         // [修改] 自定义函数：从本地 .ggfunc 文件夹加载，而非硬编码
         loadCustomFunctions();

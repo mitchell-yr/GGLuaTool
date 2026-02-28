@@ -196,14 +196,16 @@ public class GgFunctionAdder {
         // ── 2. 向下扫描，找到 sleep 块的最后一行 ─────────────────────
         // sleep 块是连续的若干条指令（const-string / new-instance / invoke-direct / invoke-virtual）
         // 遇到空行、".line"、"." 开头的其他指令或下一个 const-string 表示块结束。
-        // 我们把"sleep 块"定义为：从锚点行开始，直到碰到下一个语义边界（空行或 .line）为止。
+        // 我们把"sleep 块"定义为：从锚点行开始，直到碰到下一个语义边界（.line）为止。
         int sleepBlockEnd = anchorIdx; // 最后属于 sleep 块的行索引（含）
         for (int i = anchorIdx + 1; i < lines.length; i++) {
             String trimmed = lines[i].trim();
-            // 空行 或 .line / .end / .catch 等指令 → sleep 块到上一行为止
-            if (trimmed.isEmpty() || trimmed.startsWith(".line")
-                    || trimmed.startsWith(".end") || trimmed.startsWith(".catch")
-                    || trimmed.startsWith(".packed") || trimmed.startsWith(".sparse")) {
+           /* // .line指令 → sleep 块到上一行为止//由于有些GG没有.line于是弃用
+            if (trimmed.startsWith(".line")) {
+                break;
+            }*/
+            if (trimmed.startsWith("invoke-virtual")) {
+                sleepBlockEnd+=1;
                 break;
             }
             sleepBlockEnd = i;
