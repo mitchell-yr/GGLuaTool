@@ -9,8 +9,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,7 +42,6 @@ import androidx.core.view.GravityCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
@@ -56,8 +53,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import mituran.gglua.tool.apktools.ModifierActivity;
 import mituran.gglua.tool.licenseModel.OpenSourceActivity;
@@ -72,19 +67,13 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private Toolbar toolbar;
-    private ViewPager2 viewPager;
-    private LinearLayout indicatorLayout;
-    private BannerAdapter bannerAdapter;
-    private Handler autoScrollHandler = new Handler(Looper.getMainLooper());
-    private Runnable autoScrollRunnable;
-    private int currentPage = 0;
 
     // 卡片视图
     private CardView card_downloadGG, card2, card3, card4;
 
-    private Button btn_downloadGG,btn_encrypt_tutorial,btn_decrypt_tutorial,btn_gg_apk_generate;
+    private Button btn_downloadGG,btn_gg_apk_generate;
 
-    private LinearLayout  btn_GGDocument,btn_GGTutorial,btn_virtualmachine_decrypt,btn_unluac,btn_tdecompile,btn_gg_decompile,btn_gg_addingfunction;
+    private LinearLayout  btn_virtualmachine_decrypt,btn_unluac,btn_tdecompile,btn_gg_decompile,btn_gg_addingfunction;
 
     //TDEcompile下载链接
     private String tdecompileDownloadUrl="https://mit0yr.lanzout.com/iDyVa37jjfji";
@@ -122,8 +111,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         drawerLayout = view.findViewById(R.id.home_drawer_layout);
         navigationView = view.findViewById(R.id.home_nav_view);
         toolbar = view.findViewById(R.id.home_toolbar);
-        viewPager = view.findViewById(R.id.viewPager);
-        indicatorLayout = view.findViewById(R.id.indicatorLayout);
 
         // 初始化卡片
         card_downloadGG = view.findViewById(R.id.card1);
@@ -132,13 +119,9 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         card4 = view.findViewById(R.id.card4);
 
         //卡片1
-        btn_GGDocument= view.findViewById(R.id.btn_GGDocument);
-        btn_GGTutorial= view.findViewById(R.id.btn_GGTutorial);
         btn_downloadGG = view.findViewById(R.id.btn_downloadGG);//GG下载卡片的按钮
 
         //卡片2
-        btn_encrypt_tutorial=view.findViewById(R.id.btn_encrypt_tutorial);
-        btn_decrypt_tutorial=view.findViewById(R.id.btn_decrypt_tutorial);
         btn_gg_decompile=view.findViewById(R.id.btn_gg_decompile);
         btn_tdecompile=view.findViewById(R.id.btn_tdecompile);
         btn_unluac=view.findViewById(R.id.btn_unluac);
@@ -146,16 +129,12 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
 
         //卡片3
         btn_gg_apk_generate=view.findViewById(R.id.btn_auto_generate);
-        btn_gg_addingfunction=view.findViewById(R.id.btn_function_add);
 
         // 设置工具栏
         ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
 
         // 设置导航视图监听器
         navigationView.setNavigationItemSelectedListener(this);
-
-        // 设置轮播图
-        setupBanner();
 
         // 设置卡片点击事件
         setupCardClickListeners();
@@ -164,72 +143,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         initializeFilePicker();
 
         return view;
-    }
-
-    private void setupBanner() {
-        // 准备轮播图数据（这里使用示例图片，实际使用时替换为真实图片）
-        List<Integer> bannerImages = new ArrayList<>();
-        bannerImages.add(R.drawable.ic_launcher_background); // 替换为真实图片
-        bannerImages.add(R.drawable.ic_launcher_background);
-        bannerImages.add(R.drawable.ic_launcher_background);
-
-        // 设置适配器
-        bannerAdapter = new BannerAdapter(bannerImages);
-        bannerAdapter.setOnBannerClickListener(position -> {
-            Toast.makeText(getContext(), "点击了第 " + (position + 1) + " 张图片", Toast.LENGTH_SHORT).show();
-        });
-        viewPager.setAdapter(bannerAdapter);
-
-        // 设置指示器
-        setupIndicators(bannerImages.size());
-
-        // 设置页面切换监听
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                currentPage = position;
-                updateIndicators(position);
-            }
-        });
-
-        // 设置自动轮播
-        setupAutoScroll(bannerImages.size());
-    }
-
-    private void setupIndicators(int count) {
-        indicatorLayout.removeAllViews();
-        for (int i = 0; i < count; i++) {
-            View indicator = new View(getContext());
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    20, 20
-            );
-            params.setMargins(8, 0, 8, 0);
-            indicator.setLayoutParams(params);
-            indicator.setBackgroundResource(R.drawable.banner_indicator_selector);
-            indicator.setSelected(i == 0);
-            indicatorLayout.addView(indicator);
-        }
-    }
-
-    private void updateIndicators(int position) {
-        for (int i = 0; i < indicatorLayout.getChildCount(); i++) {
-            indicatorLayout.getChildAt(i).setSelected(i == position);
-        }
-    }
-
-    private void setupAutoScroll(int pageCount) {
-        autoScrollRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (currentPage == pageCount - 1) {
-                    currentPage = 0;
-                } else {
-                    currentPage++;
-                }
-                viewPager.setCurrentItem(currentPage, true);
-                autoScrollHandler.postDelayed(this, 3000); // 3秒切换一次
-            }
-        };
     }
 
     private void setupCardClickListeners() {
@@ -248,22 +161,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
                 }
             }
         });
-
-        // 按钮
-        if (btn_GGDocument != null) {
-            btn_GGDocument.setOnClickListener(v -> {
-                Intent intent = new Intent();
-                intent.setClass(getContext(), GGFunctionDocumentViewActivity.class);
-                startActivity(intent);
-            });
-        }
-        if (btn_GGTutorial != null) {
-            btn_GGTutorial.setOnClickListener(v -> {
-                Intent intent = new Intent();
-                intent.setClass(getContext(), GGTutorialActivity.class);
-                startActivity(intent);
-            });
-        }
 
         // Unluac按钮
         if (btn_unluac != null) {
@@ -288,27 +185,11 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
                 Toast.makeText(getContext(), "GG修改器反编译功能开发中...", Toast.LENGTH_SHORT).show();
             });
         }
-        //加密教程
-        if (btn_encrypt_tutorial != null) {
-            btn_encrypt_tutorial.setOnClickListener(v -> {
-                Intent intent = new Intent();
-                intent.setClass(getContext(), EncryptTutorialActivity.class);
-                startActivity(intent);
-            });
-        }
-        //解密教程
-        if (btn_decrypt_tutorial != null) {
-            btn_decrypt_tutorial.setOnClickListener(v -> {
-                Intent intent = new Intent();
-                // intent.setClass(getContext(),DecryptTutorialActivity.class);
-                startActivity(intent);
-            });
-        }
         //解密教程
         if (btn_virtualmachine_decrypt != null) {
             btn_virtualmachine_decrypt.setOnClickListener(v -> {
                 Intent intent = new Intent();
-                intent.setClass(getContext(),LuaExecutorActivity.class);
+                intent.setClass(getContext(), LuaExecutorActivity.class);
                 startActivity(intent);
             });
         }
@@ -347,13 +228,11 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     @Override
     public void onResume() {
         super.onResume();
-        autoScrollHandler.postDelayed(autoScrollRunnable, 3000);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        autoScrollHandler.removeCallbacks(autoScrollRunnable);
     }
 
     @Override
@@ -408,7 +287,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     @Override
     public void onDestroy() {
         super.onDestroy();
-        autoScrollHandler.removeCallbacks(autoScrollRunnable);
     }
 
     /**

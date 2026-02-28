@@ -51,6 +51,91 @@
 
 
 ### 如何给luaj虚拟机添加\修改函数
+### 如何制作GG修改器函数包
+
+函数包（.ggfunc）是`定制GG修改器`功能中用于给修改器的luaj虚拟机添加用户自定义函数的，一个正常的函数包（ZIP 结构）应该包含：  
+
+- funcpack.json          —— 元数据（函数名、描述、适用版本等）
+- inner_96.smali         —— Script$xxx.smali（96.0 版，可选）（xxx内容和名称一致）
+- inner_101.smali        —— Script$xxx.smali（101.1 版，可选）
+- registration_96.smali  —— sleep 下方插入的注册代码（96.0 版，可选）
+- registration_101.smali —— sleep 下方插入的注册代码（101.1 版，可选）
+
+funcpack.json 示例：  
+
+```json
+ {
+   "name": "名称",
+   "description": "描述",
+   "version": "使用版本",
+   "format_version": 1
+ }
+```
+
+> version 字段含义：  
+> "96"        — 仅有 96.0 版 smali  
+> "101"       — 仅有 101.1 版 smali  
+> "universal" — 同时包含两个版本的 smali  
+
+我提供了测试函数包供参考。
+
+运行时流程如下：  
+将inner添加到class内  
+在Script类中定位到sleep方法注册处，并在下方添加registration内的代码片段。会自动判断版本并注入对应版本代码
+### 社区分页（communityFragment）
+服务端接口文档（方便搭建后端）  
+
+轮播图接口 GET /api/community/banners  
+```JSON
+{
+"code": 0,
+"data": [
+{
+"imageUrl": "http://你的服务器/images/banner1.jpg",
+"linkUrl": "http://跳转链接",
+"title": "轮播图标题"
+},
+{
+"imageUrl": "http://你的服务器/images/banner2.jpg",
+"linkUrl": "",
+"title": "第二张轮播图"
+}
+]
+}
+```
+脚本分享接口 GET /api/community/scripts
+```JSON
+{
+"code": 0,
+"data": [
+{
+"id": 1,
+"title": "某游戏脚本",
+"desc": "支持最新版本，一键修改金币数量",
+"author": "开发者A",
+"tag": "热门",
+"date": "2024-01-15",
+"url": "http://详情链接"
+}
+]
+}
+```
+资源获取接口 GET /api/community/resources
+```JSON
+{
+"code": 0,
+"data": [
+{
+"id": 1,
+"title": "GameGuardian v101.1",
+"desc": "最新版GG修改器",
+"iconUrl": "http://你的服务器/icons/gg.png",
+"size": "15.2MB",
+"downloadUrl": "http://下载链接"
+}
+]
+}
+```
 ### 如何添加新的代码块类型
 #### 1. 在 `CodeBlockType.java` 中添加新枚举
 
@@ -166,12 +251,4 @@ public static List<CodeBlockTypeItem> createAllCategories() {
     return categories;
 }
 ```
-#### 注意事项
 
-1. **颜色选择**：为同一类操作使用相同颜色便于识别
-2. **默认值**：提供合理的默认值帮助用户理解
-3. **提示文本**：使用清晰的中文提示
-4. **代码生成**：确保生成的Lua代码语法正确
-5. **测试**：添加后要测试生成的代码是否可用
-
-这样就可以无限扩展你的可视化编辑器了！

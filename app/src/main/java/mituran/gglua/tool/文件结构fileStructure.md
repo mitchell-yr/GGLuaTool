@@ -13,17 +13,27 @@ java/
 │   ├── model/                   # 数据模型
 │   ├── plugin/                  # 编辑器插件系统
 │   ├── template/                # lua脚本模板系统
+│   ├── communityFragment        # community分页
+│   │   ├── CommunityFragment.java      ← 主Fragment
+│   │   ├── ApiConfig.java              ← 网络配置（改IP等配置改这里）
+│   │   ├── BannerItem.java             ← 轮播图数据模型
+│   │   ├── TutorialItem.java           ← 教程数据模型
+│   │   ├── ScriptItem.java             ← 脚本分享数据模型
+│   │   ├── ResourceItem.java           ← 资源数据模型
+│   │   ├── BannerAdapter.java          ← 轮播图适配器
+│   │   ├── TutorialAdapter.java        ← 教程适配器
+│   │   ├── ScriptAdapter.java          ← 脚本分享适配器
+│   │   └── ResourceAdapter.java        ← 资源适配器
 │   ├── tutorial/                # 教程相关
 │   │   ├── EncryptTutorialActivity.java  # lua脚本加密教程文档md查看器
 │   │   ├── GGFunctionDocumentViewActivity.java  # GG函数文档md查看器
 │   │   └── GGTutorialActivity.java  # GG修改器使用教程文档md查看器
 │   ├── util/                    # 工具类
+│   │   ├── HttpHelper.java             ← 网络请求工具
 │   └── VisualLuaScriptEditor.luash  # Lua可使化脚本编辑器
 │
-├── BannerAdapter.java           # 首页轮播图横幅适配器
 ├── BuildOutputLogManager.java   # 构建输出日志管理器（用于lua脚本编译）
 ├── CodeEditorLua.java           # Lua代码编辑器
-├── CommunityFragment.java       # 社区页面
 ├── DraggableScrollBar.java      # 可拖动滚动条组件（用于tutorial内各个独立的md查看器）
 ├── EncryptionOptionsDialog.java # lua脚本加密选项对话框（在代码编辑器内点击编译后用于选择启用哪些加密）
 ├── HomeFragment.java            # 主页页面
