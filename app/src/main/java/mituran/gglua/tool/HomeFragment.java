@@ -69,9 +69,9 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     private Toolbar toolbar;
 
     // 卡片视图
-    private CardView card_downloadGG, card2, card3, card4;
+    private CardView card2, card3, card4;
 
-    private Button btn_downloadGG,btn_gg_apk_generate;
+    private Button btn_gg_apk_generate;
 
     private LinearLayout  btn_virtualmachine_decrypt,btn_unluac,btn_tdecompile,btn_gg_decompile,btn_gg_addingfunction;
 
@@ -113,13 +113,10 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         toolbar = view.findViewById(R.id.home_toolbar);
 
         // 初始化卡片
-        card_downloadGG = view.findViewById(R.id.card1);
         card2 = view.findViewById(R.id.card2);
         card3 = view.findViewById(R.id.card3);
         card4 = view.findViewById(R.id.card4);
 
-        //卡片1
-        btn_downloadGG = view.findViewById(R.id.btn_downloadGG);//GG下载卡片的按钮
 
         //卡片2
         btn_gg_decompile=view.findViewById(R.id.btn_gg_decompile);
@@ -146,21 +143,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     }
 
     private void setupCardClickListeners() {
-        card_downloadGG.setOnClickListener(v -> {
-            //点击下载GG卡片
-        });
-        btn_downloadGG.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse("https://gameguardian.net/forum/files/file/2-gameguardian/"));
-                    startActivity(intent);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
 
         // Unluac按钮
         if (btn_unluac != null) {

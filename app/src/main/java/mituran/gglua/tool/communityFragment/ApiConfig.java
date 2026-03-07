@@ -10,23 +10,19 @@ public class ApiConfig {
 
     // ==================== 服务器基础地址 ====================
     // 修改此处即可切换服务器
-    public static final String BASE_URL = "http://192.168.1.100:8080";
+    public static final String BASE_URL = "http://localhost:8080";
 
     // ==================== 轮播图接口 ====================
-    // 返回格式: { "code":0, "data":[ {"imageUrl":"xxx", "linkUrl":"xxx", "title":"xxx"} ] }
     public static final String BANNER_LIST = BASE_URL + "/api/community/banners";
 
     // ==================== 脚本分享接口 ====================
-    // 返回格式: { "code":0, "data":[ {"id":1, "title":"xxx", "desc":"xxx", "author":"xxx", "tag":"xxx", "date":"xxx", "url":"xxx"} ] }
     public static final String SCRIPT_LIST = BASE_URL + "/api/community/scripts";
 
     // ==================== 资源获取接口 ====================
-    // 返回格式: { "code":0, "data":[ {"id":1, "title":"xxx", "desc":"xxx", "iconUrl":"xxx", "size":"xxx", "downloadUrl":"xxx"} ] }
     public static final String RESOURCE_LIST = BASE_URL + "/api/community/resources";
 
     // ==================== 资源详情接口 ====================
     // 用法: RESOURCE_DETAIL + "?id=1" 或 RESOURCE_DETAIL + "/1"
-    // 返回: { "code":0, "data":{ "markdownContent":"# 标题\n正文...", ...所有ResourceItem字段 } }
     public static final String RESOURCE_DETAIL = BASE_URL + "/api/community/resource/detail";
 
     // ==================== 超时设置(毫秒) ====================
