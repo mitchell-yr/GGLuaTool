@@ -17,8 +17,10 @@
 
 ## 主要事项
 
-请遵守开源协议！此软件仅供学习交流使用，**禁止用于违法用途**(如制作游戏外挂等非法用途)，若造成任何后果与开发者无关
-此项目使用了deepseek、claude、gemini辅助，请按照《人工智能生成合成内容标识办法》等法规标识生成式人工智能使用
+请遵守开源协议！此软件仅供学习交流使用，**禁止用于违法用途**(如制作游戏外挂等非法用途)，若造成任何后果与开发者无关  
+此项目使用了deepseek、claude、gemini辅助，请按照《人工智能生成合成内容标识办法》等法规标识生成式人工智能使用  
+
+各个文件功能及项目结构见“文件结构fileStructure”
 
 ## 使用方法
 
@@ -120,18 +122,48 @@ funcpack.json 示例：
 ]
 }
 ```
-资源获取接口 GET /api/community/resources
+资源详情页接口 GET /api/community/resource/detail?id=1
 ```JSON
+
+{
+"code": 0,
+"data": {
+"id": 1,
+"title": "某某修改器",
+"desc": "功能强大的游戏修改工具",
+"iconUrl": "http://服务器/icons/tool.png",
+"size": "10.5MB",
+"downloadUrl": "http://服务器/download/tool.apk",
+"version": "v3.2.1",
+"author": "开发者名称",
+"updateDate": "2024-06-15",
+"category": "工具",
+"downloadCount": 15000,
+"rating": 4.8,
+"markdownContent": "# 工具详细介绍\n\n## 功能特点\n\n- 功能一\n- 功能二\n\n## 使用方法\n\n1. 步骤一\n2. 步骤二\n\n## ⚠️ 注意事项\n\n> 重要提示内容\n\n![截图](http://服务器/images/screenshot.png)"
+}
+}
+```
+资源接口 GET /api/community/resources
+```JSON
+
 {
 "code": 0,
 "data": [
 {
 "id": 1,
-"title": "GameGuardian v101.1",
-"desc": "最新版GG修改器",
-"iconUrl": "http://你的服务器/icons/gg.png",
-"size": "15.2MB",
-"downloadUrl": "http://下载链接"
+"title": "某某修改器",
+"desc": "功能强大的游戏修改工具",
+"iconUrl": "http://服务器/icons/tool.png",
+"size": "10.5MB",
+"downloadUrl": "http://服务器/download/tool.apk",
+"version": "v3.2.1",
+"author": "开发者名称",
+"updateDate": "2024-06-15",
+"category": "工具",
+"detailUrl": "http://服务器/api/community/resource/detail?id=1",
+"downloadCount": 15000,
+"rating": 4.8
 }
 ]
 }

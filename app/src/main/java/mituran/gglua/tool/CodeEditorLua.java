@@ -62,6 +62,12 @@ public class CodeEditorLua extends AppCompatActivity {
     private static final String PREF_LINE_NUMBERS = "lineNumbers";
     private static final String PREF_WORD_WRAP = "wordWrap";
     private static final String PREF_THEME = "theme";
+    private static final String PREF_AUTO_SAVE = "autoSave";
+    private static final String PREF_AUTO_BACKUP = "autoBackup";
+
+    private static final long AUTO_SAVE_INTERVAL_MS = 30_000; // 30秒自动保存
+    private android.os.Handler autoSaveHandler;
+    private Runnable autoSaveRunnable;
 
     private ImageButton btnUndo, btnRedo, btnEdit, btnManage,btnCopy,btnPaste,btnFind,btnSave,btnTutorial;
     private String path,dirPath;
@@ -236,6 +242,25 @@ public class CodeEditorLua extends AppCompatActivity {
                 showManageMenu(v);
             }
         });
+
+        // 初始化自动保存
+        autoSaveHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        autoSaveRunnable = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                boolean autoSave = prefs.getBoolean(PREF_AUTO_SAVE, false);
+                boolean autoBackup = prefs.getBoolean(PREF_AUTO_BACKUP, false);
+                if (autoSave) {
+                    saveData(codeEditor.getText().toString(), dirPath, "/code.lua");
+                }
+                if (autoBackup) {
+                    performBackup(false);
+                }
+                autoSaveHandler.postDelayed(this, AUTO_SAVE_INTERVAL_MS);
+            }
+        };
+        autoSaveHandler.postDelayed(autoSaveRunnable, AUTO_SAVE_INTERVAL_MS);
     }
 
     // 加载编辑器设置
@@ -254,8 +279,11 @@ public class CodeEditorLua extends AppCompatActivity {
         boolean wordWrap = prefs.getBoolean(PREF_WORD_WRAP, false);
         codeEditor.setWordwrap(wordWrap);
 
-        // 主题设置可以在这里加载 (如果需要的话)
-        // String theme = prefs.getString(PREF_THEME, "solarized-light");
+        // 主题设置：仅当保存的主题与默认不同时才重新应用
+        String theme = prefs.getString(PREF_THEME, "solarized-light");
+        if (!theme.equals("solarized-light")) {
+            applyTheme(theme);
+        }
     }
 
     // 保存编辑器设置
@@ -371,12 +399,15 @@ public class CodeEditorLua extends AppCompatActivity {
 
         popupMenu.getMenu().add(0, 2, 0, "另存为");
         popupMenu.getMenu().add(0, 3, 0, "导入模板");
+        popupMenu.getMenu().add(0, 11, 0, "手动备份");
 
         SubMenu editorSubMenu = popupMenu.getMenu().addSubMenu(0, 5, 0, "编辑器设置");
         editorSubMenu.add(0, 6, 0, "主题设置");
         editorSubMenu.add(0, 7, 0, "字体大小");
         editorSubMenu.add(0, 8, 0, "显示行号");
         editorSubMenu.add(0, 9, 0, "换行显示");
+        editorSubMenu.add(0, 12, 0, getAutoSaveMenuTitle());
+        editorSubMenu.add(0, 13, 0, getAutoBackupMenuTitle());
 
         popupMenu.getMenu().add(0, 10, 0, "关于");
 
@@ -405,11 +436,69 @@ public class CodeEditorLua extends AppCompatActivity {
                     case 10:
                         showAboutDialog();
                         break;
+                    case 11:
+                        performBackup(true);
+                        break;
+                    case 12:
+                        toggleAutoSave();
+                        break;
+                    case 13:
+                        toggleAutoBackup();
+                        break;
                 }
                 return true;
             }
         });
         popupMenu.show();
+    }
+
+    private String getAutoSaveMenuTitle() {
+        boolean enabled = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(PREF_AUTO_SAVE, false);
+        return "自动保存：" + (enabled ? "开" : "关");
+    }
+
+    private String getAutoBackupMenuTitle() {
+        boolean enabled = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(PREF_AUTO_BACKUP, false);
+        return "自动备份：" + (enabled ? "开" : "关");
+    }
+
+    private void toggleAutoSave() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean current = prefs.getBoolean(PREF_AUTO_SAVE, false);
+        prefs.edit().putBoolean(PREF_AUTO_SAVE, !current).apply();
+        Toast.makeText(this, "自动保存已" + (!current ? "开启" : "关闭") + "（每30秒）", Toast.LENGTH_SHORT).show();
+    }
+
+    private void toggleAutoBackup() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean current = prefs.getBoolean(PREF_AUTO_BACKUP, false);
+        prefs.edit().putBoolean(PREF_AUTO_BACKUP, !current).apply();
+        Toast.makeText(this, "自动备份已" + (!current ? "开启" : "关闭") + "（每30秒）", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 执行备份：在 dirPath 下生成 code_backup_时间戳.lua
+     * @param showToast 是否弹出结果提示（手动备份时为true，自动备份时为false）
+     */
+    private void performBackup(boolean showToast) {
+        try {
+            String timestamp = new java.text.SimpleDateFormat(
+                    "yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(new java.util.Date());
+            String backupFileName = "code_backup_" + timestamp + ".lua";
+            File backupFile = new File(dirPath, backupFileName);
+            String content = codeEditor.getText().toString();
+            FileOutputStream fos = new FileOutputStream(backupFile);
+            fos.write(content.getBytes("UTF-8"));
+            fos.close();
+            if (showToast) {
+                Toast.makeText(this, "备份成功：" + backupFileName, Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            if (showToast) {
+                Toast.makeText(this, "备份失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+            Log.e("Backup", "备份失败", e);
+        }
     }
 
     private void importTemplate(){
@@ -631,13 +720,48 @@ public class CodeEditorLua extends AppCompatActivity {
     }
 
     private void showThemeSettings() {
-        String[] themes = {"Solarized Light", "Solarized Dark", "Monokai", "GitHub"};
+        String[] themeNames = {"Solarized Light", "Quiet light", "Monokai"};
+        String[] themeAssets = {"solarized-light", "quietlight", "Monokai"};
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String currentTheme = prefs.getString(PREF_THEME, "solarized-light");
+        int currentIndex = 0;
+        for (int i = 0; i < themeAssets.length; i++) {
+            if (themeAssets[i].equals(currentTheme)) { currentIndex = i; break; }
+        }
+
         new AlertDialog.Builder(this)
                 .setTitle("选择主题")
-                .setItems(themes, (dialog, which) -> {
-                    // TODO: 实现主题切换
+                .setSingleChoiceItems(themeNames, currentIndex, null)
+                .setPositiveButton("应用", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    String themeName = themeAssets[selected];
+                    applyTheme(themeName);
+                    prefs.edit().putString(PREF_THEME, themeName).apply();
+                    Toast.makeText(this, "主题已切换为：" + themeNames[selected], Toast.LENGTH_SHORT).show();
                 })
+                .setNegativeButton("取消", null)
                 .show();
+    }
+
+    private void applyTheme(String themeName) {
+        try {
+            var themeRegistry = ThemeRegistry.getInstance();
+            var themeAssetsPath = "textmate/" + themeName + ".json";
+            var model = new ThemeModel(
+                    IThemeSource.fromInputStream(
+                            FileProviderRegistry.getInstance().tryGetInputStream(themeAssetsPath),
+                            themeAssetsPath, null
+                    ),
+                    themeName
+            );
+            themeRegistry.loadTheme(model);
+            ThemeRegistry.getInstance().setTheme(themeName);
+            codeEditor.setColorScheme(TextMateColorScheme.create(ThemeRegistry.getInstance()));
+        } catch (Exception e) {
+            Toast.makeText(this, "主题切换失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("ThemeSwitch", "切换主题失败", e);
+        }
     }
 
     private void showFontSizeDialog() {
@@ -1139,6 +1263,9 @@ public class CodeEditorLua extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (autoSaveHandler != null && autoSaveRunnable != null) {
+            autoSaveHandler.removeCallbacks(autoSaveRunnable);
+        }
         if (luaEngine != null) {
             luaEngine.close();
         }

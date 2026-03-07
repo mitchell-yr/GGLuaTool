@@ -1,6 +1,7 @@
 package mituran.gglua.tool.communityFragment;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,26 +38,15 @@ public class ResourceAdapter extends RecyclerView.Adapter<ResourceAdapter.ViewHo
     public void setItems(List<ResourceItem> items) {
         this.items = items;
         notifyDataSetChanged();
-        // 加载图标
-        for (int i = 0; i < items.size(); i++) {
-            loadIcon(items.get(i), i);
-        }
     }
 
-    private void loadIcon(ResourceItem item, int position) {
-        if (item.getIconUrl() == null || item.getIconUrl().isEmpty()) return;
-        HttpHelper.downloadBitmap(item.getIconUrl(), new HttpHelper.BitmapCallback() {
-            @Override
-            public void onSuccess(Bitmap bitmap) {
-                iconCache.put(item.getIconUrl(), bitmap);
-                notifyItemChanged(position);
-            }
-
-            @Override
-            public void onError(String error) {
-                // 使用默认图标
-            }
-        });
+    /**
+     * 追加数据（用于合并内置+网络）
+     */
+    public void addItems(List<ResourceItem> newItems) {
+        int start = this.items.size();
+        this.items.addAll(newItems);
+        notifyItemRangeInserted(start, newItems.size());
     }
 
     @NonNull
@@ -71,26 +62,76 @@ public class ResourceAdapter extends RecyclerView.Adapter<ResourceAdapter.ViewHo
         ResourceItem item = items.get(position);
         holder.title.setText(item.getTitle());
         holder.desc.setText(item.getDesc());
-        holder.size.setText(item.getSize());
 
-        Bitmap cached = iconCache.get(item.getIconUrl());
-        if (cached != null) {
-            holder.icon.setImageBitmap(cached);
-        } else {
-            holder.icon.setImageResource(R.drawable.ic_tutorial_function); // 默认图标
+        // 大小 + 内置标识
+        String sizeText = item.getSize() != null ? item.getSize() : "";
+        if (item.isBuiltIn()) {
+            sizeText = "内置 · " + sizeText;
         }
+        holder.size.setText(sizeText);
 
+        // 加载图标
+        loadItemIcon(holder, item, position);
+
+        // 获取按钮
         holder.downloadBtn.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onDownloadClick(item, position);
             }
         });
 
+        // 整项点击 → 打开详情页
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(item, position);
             }
         });
+    }
+
+    private void loadItemIcon(ViewHolder holder, ResourceItem item, int position) {
+        // 优先从缓存
+        String cacheKey = item.isBuiltIn() ? ("asset:" + item.getAssetIconPath())
+                : item.getIconUrl();
+
+        if (cacheKey != null && iconCache.containsKey(cacheKey)) {
+            holder.icon.setImageBitmap(iconCache.get(cacheKey));
+            return;
+        }
+
+        // 内置资源从assets加载
+        if (item.isBuiltIn() && item.getAssetIconPath() != null
+                && !item.getAssetIconPath().isEmpty()) {
+            try {
+                InputStream is = holder.itemView.getContext().getAssets()
+                        .open(item.getAssetIconPath());
+                Bitmap bitmap = BitmapFactory.decodeStream(is);
+                is.close();
+                if (bitmap != null) {
+                    iconCache.put(cacheKey, bitmap);
+                    holder.icon.setImageBitmap(bitmap);
+                    return;
+                }
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+
+        // 网络图标
+        if (item.getIconUrl() != null && !item.getIconUrl().isEmpty()) {
+            holder.icon.setImageResource(R.drawable.ic_tutorial_function); // 占位
+            HttpHelper.downloadBitmap(item.getIconUrl(), new HttpHelper.BitmapCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap) {
+                    iconCache.put(cacheKey, bitmap);
+                    notifyItemChanged(position);
+                }
+
+                @Override
+                public void onError(String error) { }
+            });
+        } else {
+            holder.icon.setImageResource(R.drawable.ic_tutorial_function);
+        }
     }
 
     @Override

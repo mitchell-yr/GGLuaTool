@@ -17,13 +17,14 @@ java/
 │   │   ├── CommunityFragment.java      ← 主Fragment
 │   │   ├── ApiConfig.java              ← 网络配置（改IP等配置改这里）
 │   │   ├── BannerItem.java             ← 轮播图数据模型
+│   │   ├── ResourceDetailActivity.java ← “资源”详情页
 │   │   ├── TutorialItem.java           ← 教程数据模型
 │   │   ├── ScriptItem.java             ← 脚本分享数据模型
 │   │   ├── ResourceItem.java           ← 资源数据模型
 │   │   ├── BannerAdapter.java          ← 轮播图适配器
-│   │   ├── TutorialAdapter.java        ← 教程适配器
-│   │   ├── ScriptAdapter.java          ← 脚本分享适配器
-│   │   └── ResourceAdapter.java        ← 资源适配器
+│   │   ├── TutorialAdapter.java        ← “教程”适配器
+│   │   ├── ScriptAdapter.java          ← “脚本分享”适配器
+│   │   └── ResourceAdapter.java        ← “资源”适配器。支持本地“资源”，注册本地“资源”在CommunityFragment添加ResourceItem.createBuiltIn(...)，并在assets/resources内添加相应的md
 │   ├── tutorial/                # 教程相关
 │   │   ├── EncryptTutorialActivity.java  # lua脚本加密教程文档md查看器
 │   │   ├── GGFunctionDocumentViewActivity.java  # GG函数文档md查看器

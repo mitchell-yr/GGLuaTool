@@ -24,6 +24,11 @@ public class ApiConfig {
     // 返回格式: { "code":0, "data":[ {"id":1, "title":"xxx", "desc":"xxx", "iconUrl":"xxx", "size":"xxx", "downloadUrl":"xxx"} ] }
     public static final String RESOURCE_LIST = BASE_URL + "/api/community/resources";
 
+    // ==================== 资源详情接口 ====================
+    // 用法: RESOURCE_DETAIL + "?id=1" 或 RESOURCE_DETAIL + "/1"
+    // 返回: { "code":0, "data":{ "markdownContent":"# 标题\n正文...", ...所有ResourceItem字段 } }
+    public static final String RESOURCE_DETAIL = BASE_URL + "/api/community/resource/detail";
+
     // ==================== 超时设置(毫秒) ====================
     public static final int CONNECT_TIMEOUT = 10000;
     public static final int READ_TIMEOUT = 15000;

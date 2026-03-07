@@ -449,14 +449,40 @@ public class CommunityFragment extends Fragment {
     }
 
     // ================================================================
-    //                       资源获取版块
-    // ================================================================
+//                       资源获取版块
+// ================================================================
+
+    /**
+     * 获取内置资源列表
+     * ====== 在这里配置你的内置资源 ======
+     */
+    private List<ResourceItem> getBuiltInResources() {
+        List<ResourceItem> list = new ArrayList<>();
+
+        list.add(ResourceItem.createBuiltIn(
+                -1,                                         // id（负数表示内置）
+                "GG修改器 官方下载",                       // 标题
+                "强大的安卓游戏修改工具",                      // 描述
+                "v101.1",                                    // 版本
+                "GameGuardian Team",                          // 作者
+                "39.45 MB",                                     // 大小
+                "工具",                                       // 分类
+                "resources/gameguardian.md",                   // assets中md路径
+                " ",                 // assets中图标路径（可选）
+                "https://gameguardian.net/download"             // 下载链接
+        ));
+
+
+        // ====== 可继续添加更多内置资源 ======
+
+        return list;
+    }
 
     private void setupResources() {
         resourceAdapter = new ResourceAdapter(new ResourceAdapter.OnResourceClickListener() {
             @Override
             public void onDownloadClick(ResourceItem item, int position) {
-                // TODO: 点击"获取"按钮
+                // 点击"获取"按钮 → 直接跳转下载
                 if (item.getDownloadUrl() != null && !item.getDownloadUrl().isEmpty()) {
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW,
@@ -466,14 +492,15 @@ public class CommunityFragment extends Fragment {
                         Toast.makeText(getContext(), "无法打开下载链接", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(getContext(), "暂无下载链接", Toast.LENGTH_SHORT).show();
+                    // 没有直接下载链接，打开详情页
+                    openResourceDetail(item);
                 }
             }
 
             @Override
             public void onItemClick(ResourceItem item, int position) {
-                // TODO: 点击资源项
-                Toast.makeText(getContext(), item.getTitle(), Toast.LENGTH_SHORT).show();
+                // 点击资源项 → 打开详情页
+                openResourceDetail(item);
             }
         });
 
@@ -482,20 +509,36 @@ public class CommunityFragment extends Fragment {
         resourceRecyclerView.setNestedScrollingEnabled(false);
     }
 
+    /**
+     * 打开资源详情页
+     */
+    private void openResourceDetail(ResourceItem item) {
+        Intent intent = new Intent(getContext(), ResourceDetailActivity.class);
+        intent.putExtra(ResourceDetailActivity.EXTRA_RESOURCE_ITEM, item);
+        startActivity(intent);
+    }
+
     private void loadResourceData() {
         resourceLoading.setVisibility(View.VISIBLE);
         resourceEmpty.setVisibility(View.GONE);
         resourceRecyclerView.setVisibility(View.GONE);
 
+        // 1. 先加载内置资源
+        List<ResourceItem> builtInList = getBuiltInResources();
+
+        // 2. 再请求网络资源
         HttpHelper.get(ApiConfig.RESOURCE_LIST, new HttpHelper.Callback() {
             @Override
             public void onSuccess(String response) {
                 resourceLoading.setVisibility(View.GONE);
+                resourceRecyclerView.setVisibility(View.VISIBLE);
+
+                List<ResourceItem> allResources = new ArrayList<>(builtInList);
+
                 try {
                     JSONObject json = new JSONObject(response);
                     if (json.getInt("code") == 0) {
                         JSONArray dataArray = json.getJSONArray("data");
-                        List<ResourceItem> resources = new ArrayList<>();
                         for (int i = 0; i < dataArray.length(); i++) {
                             JSONObject obj = dataArray.getJSONObject(i);
                             ResourceItem item = new ResourceItem();
@@ -505,29 +548,41 @@ public class CommunityFragment extends Fragment {
                             item.setIconUrl(obj.optString("iconUrl", ""));
                             item.setSize(obj.optString("size", ""));
                             item.setDownloadUrl(obj.optString("downloadUrl", ""));
-                            resources.add(item);
+                            item.setVersion(obj.optString("version", ""));
+                            item.setAuthor(obj.optString("author", ""));
+                            item.setUpdateDate(obj.optString("updateDate", ""));
+                            item.setCategory(obj.optString("category", ""));
+                            item.setDetailUrl(obj.optString("detailUrl", ""));
+                            item.setDownloadCount(obj.optInt("downloadCount", 0));
+                            item.setRating((float) obj.optDouble("rating", 0));
+                            item.setBuiltIn(false);
+                            allResources.add(item);
                         }
-
-                        if (resources.isEmpty()) {
-                            resourceEmpty.setVisibility(View.VISIBLE);
-                        } else {
-                            resourceRecyclerView.setVisibility(View.VISIBLE);
-                            resourceAdapter.setItems(resources);
-                        }
-                    } else {
-                        resourceEmpty.setVisibility(View.VISIBLE);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Parse resource data error", e);
+                }
+
+                if (allResources.isEmpty()) {
                     resourceEmpty.setVisibility(View.VISIBLE);
+                    resourceRecyclerView.setVisibility(View.GONE);
+                } else {
+                    resourceAdapter.setItems(allResources);
                 }
             }
 
             @Override
             public void onError(String error) {
                 resourceLoading.setVisibility(View.GONE);
-                resourceEmpty.setVisibility(View.VISIBLE);
                 Log.w(TAG, "Load resource error: " + error);
+
+                // 网络失败，仍然显示内置资源
+                if (builtInList.isEmpty()) {
+                    resourceEmpty.setVisibility(View.VISIBLE);
+                } else {
+                    resourceRecyclerView.setVisibility(View.VISIBLE);
+                    resourceAdapter.setItems(builtInList);
+                }
             }
         });
     }

@@ -15,4 +15,9 @@
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="colorAccent">@color/purple_500</item>
     </style>
+    <!-- 社区页资源详情主题 -->
+    <style name="CollapsingToolbarTitle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
 </resources>

@@ -123,6 +123,10 @@
             android:name=".apktools.FunctionManagerActivity"
             android:label="函数管理">
         </activity>
+        <activity
+            android:name=".communityFragment.ResourceDetailActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
     </application>
     <queries>
         <package android:name="com.tc" />

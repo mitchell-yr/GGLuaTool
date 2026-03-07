@@ -96,6 +96,8 @@ dependencies {
     }
     // markdown支持图片
     implementation 'io.noties.markwon:image:4.6.2'
+    implementation 'io.noties.markwon:html:4.6.2'
+    implementation 'io.noties.markwon:linkify:4.6.2'
 
     implementation 'org.luaj:luaj-jse:3.0.1'//luaj用于语法检查和编译
 

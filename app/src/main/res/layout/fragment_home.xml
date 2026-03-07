@@ -34,100 +34,6 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- 卡片1 - 浅紫色背景 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/card1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    app:cardBackgroundColor="#F3E5F5"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <!-- 卡片头部 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/card_header_gradient"
-                            android:orientation="horizontal"
-                            android:padding="8dp">
-
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginStart="12dp"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="GameGuardian"
-                                    android:textColor="@android:color/white"
-                                    android:textSize="24sp"
-                                    android:textStyle="bold" />
-
-                            </LinearLayout>
-
-
-
-                        </LinearLayout>
-
-                        <!-- 卡片内容 -->
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <!-- 主要操作按钮 -->
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_vertical"
-                                    android:layout_marginTop="4dp"
-                                    android:text="v101.1 官方最新版 • 12.5MB"
-                                    android:textColor="#9E9E9E"
-                                    android:textSize="11sp" />
-
-                            </LinearLayout>
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btn_downloadGG"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:text="下载 GameGuardian"
-                                android:textAllCaps="false"
-                                android:textSize="16sp"
-                                app:backgroundTint="#6200EE"
-                                app:cornerRadius="8dp"
-                                app:icon="@drawable/ic_download"
-                                app:iconGravity="textStart"
-                                app:iconPadding="8dp"
-                                app:rippleColor="#3700B3" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
                 <!-- 卡片2 - 渐变紫色背景 -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card2"
@@ -580,7 +486,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
-                    app:cardBackgroundColor="#EDE7F6"
+                    app:cardBackgroundColor="#F3E5F5"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
