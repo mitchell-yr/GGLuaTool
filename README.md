@@ -15,46 +15,103 @@
 
 此软件由AndroidStudio使用了java制作。
 
-## 主要事项
+## 注意事项
 
 请遵守开源协议！此软件仅供学习交流使用，**禁止用于违法用途**(如制作游戏外挂等非法用途)，若造成任何后果与开发者无关  
 此项目使用了deepseek、claude、gemini辅助，请按照《人工智能生成合成内容标识办法》等法规标识生成式人工智能使用  
 
-各个文件功能及项目结构见“文件结构fileStructure”
+由于GG的luaj虚拟机经过了魔改（jse3.0.1但是支持lua5.3特性），导致一些技术问题还待解决
 
-由于GG的luaj虚拟机经过了魔改（jse3.0.1但是支持lua5.3特性），导致一些技术问题还带解决
+## 项目结构
+
+```
+app/src/main/java/mituran/gglua/tool/    # 主包
+├── apktools/          # APK修改（GG安装包编辑、smali注入、签名）
+├── communityFragment/ # 社区分页（轮播图、脚本分享、教程、资源下载）
+├── licenseModel/      # 开源许可证
+├── luaTool/           # Lua工具（格式化、混淆、加密、语法检查）
+├── model/             # 数据模型
+├── plugin/            # 插件系统
+├── template/          # 脚本模板系统
+├── tutorial/          # 教程文档查看器
+├── util/              # 工具类（网络、剪贴板、资源复制）
+├── VisualLuaScriptEditor/ # 可视化积木式脚本编辑器
+└── *.java             # 核心Activity/Fragment
+```
+
+> 完整文件结构详见 [文件结构fileStructure.md](../GGtool2/文件结构fileStructure.md)
+
+## 技术栈
+
+| 类别    | 技术                              |
+| ----- | ------------------------------- |
+| 语言    | Java                            |
+| 构建工具  | Gradle                          |
+| 代码编辑器 | sora-editor                     |
+| Lua引擎 | Luaj（魔改版，jse3.0.1 + lua5.3特性支持） |
+| 反编译   | unluac、TD                       |
+| APK修改 | smali注入、ARSC编辑、APK签名            |
+| 加密    | 自定义Lua加密（字符串加密、函数/变量混淆、垃圾代码注入）  |
+
+## 构建说明
+
+| 环境要求                        | 版本             |
+| --------------------------- | -------------- |
+| Gradle                      | 8.10.2         |
+| AGP (Android Gradle Plugin) | 8.8.0          |
+| JDK                         | 17             |
+| compileSdk                  | 35             |
+| minSdk                      | 28 (Android 9) |
+| targetSdk                   | 35             |
+
+1. 使用 Android Studio 打开项目，等待 Gradle Sync 完成
+2. 若版本不一致，可在 `gradle/wrapper/gradle-wrapper.properties` 修改 Gradle 版本，在 `gradle/libs.versions.toml` 修改 AGP 版本
+3. Sync → Build → Build APK
+
+## 模块说明
+
+| 模块                    | 路径                       | 用途                            |
+| --------------------- | ------------------------ | ----------------------------- |
+| apktools              | `apktools/`              | 解析/修改GG安装包，注入smali代码及脚本，重签名   |
+| communityFragment     | `communityFragment/`     | 社区分页：轮播图、脚本分享、教程、资源下载，支持本地/远程 |
+| luaTool               | `luaTool/`               | Lua脚本加密、混淆、格式化、语法检查           |
+| plugin                | `plugin/`                | 编辑器插件框架，支持加载和管理外部插件           |
+| template              | `template/`              | Lua脚本模板，一键插入常用代码结构            |
+| tutorial              | `tutorial/`              | 各类教程文档的Markdown查看器            |
+| util                  | `util/`                  | 网络请求、剪贴板、资源复制等通用工具            |
+| VisualLuaScriptEditor | `VisualLuaScriptEditor/` | 积木式可视化Lua脚本编辑器                |
+
+## 功能
+
+### 目前支持
+
+| 功能     | 说明                                     |
+| ------ | -------------------------------------- |
+| 脚本编辑器  | 基于sora-editor，支持代码补全、语法高亮              |
+| 脚本模板   | 一键插入常用脚本模板                             |
+| 构建发行品  | 一键生成定制GG客户端，可自选添加自定义函数和内置脚本            |
+| Lua反编译 | unluac和TD两种字节码反编译方式（unluac遇到技术问题解决中）   |
+| 脚本编译   | 编译脚本并添加加密                              |
+| 语法检查   | Lua语法检查                                |
+| 可视化编辑  | 积木式可视化Lua脚本编辑                          |
+| Lua虚拟机 | 内置支持GG函数的lua虚拟机（用于过防御、反检测、函数调用自吐和动态调试） |
+
+> 注意：上述功能随时可能变动
+
+### 即将支持
+
+| 功能    | 说明                                 |
+| ----- | ---------------------------------- |
+| C++编译 | 一键生成、编译（可能取消一键编译）                  |
+| 直装构建  | 一键构建直装（长期目标）                       |
+| 高级加密  | 更高等级的加密方案                          |
+| 动态调试  | 基于内置luaj的即时动态调试（未来加入插桩、变量追踪）       |
+| 内置框架  | 基于spacecore（安卓9-14），后续加入blackbox适配 |
 
 ## 使用方法
 
-> - 开袋即食（bushi）
-> - 在Android Studio打开，注意gradle和java版本
+### 如何给luaj虚拟机添加/修改函数
 
-#### 目前功能
-
-- 脚本编辑器（基于sora-editor，支持代码补全、语法高亮等等）
-- 支持一件插入脚本模板
-- 构建发行品（可以一键生成定制GG客户端，且可自选添加附加函数和内置脚本）（请强大的函数添加将支持，添加函数包具体格式见代码，目前支持script添加法，提供了测试函数包供参考）
-- 两种lua字节码反编译：unluac和TD（unluac包遇到技术性问题正在解决中）（未来将加入更多工具）
-- 支持编译脚本，添加加密
-- 语法检查
-- 可视化lua编辑
-- 内置支持gg函数的lua虚拟机（可用于过防御、反检测的脚本函数调用自吐和动态调试，未来会加入插桩、变量追踪等）
-- #### 注意：这些更新随时可能变动
-  
-#### 即将支持功能
-  
-  - cpp一键生成、编译（鉴于体量，可能会取消一件编译）
-    
-  - 一键构建直装（长期）
-
-  - 更高等级的加密
-  
-  - 基于内置luaj的即时动态调试 
-
-  - 内置框架（基于spacecore（安卓9到14支持）。由于blackbox没做好gg适配，会在后续版本加入。如果有更好的开源免费框架欢迎推荐）
-
-
-### 如何给luaj虚拟机添加\修改函数
 ### 如何制作GG修改器函数包
 
 函数包（.ggfunc）是`定制GG修改器`功能中用于给修改器的luaj虚拟机添加用户自定义函数的，一个正常的函数包（ZIP 结构）应该包含：  
@@ -86,10 +143,13 @@ funcpack.json 示例：
 运行时流程如下：  
 将inner添加到class内  
 在Script类中定位到sleep方法注册处，并在下方添加registration内的代码片段。会自动判断版本并注入对应版本代码
+
 ### 社区分页（communityFragment）
+
 服务端接口文档（方便搭建后端）  
 
 轮播图接口 GET /api/community/banners  
+
 ```JSON
 {
 "code": 0,
@@ -107,7 +167,9 @@ funcpack.json 示例：
 ]
 }
 ```
+
 脚本分享接口 GET /api/community/scripts
+
 ```JSON
 {
 "code": 0,
@@ -124,9 +186,10 @@ funcpack.json 示例：
 ]
 }
 ```
-资源详情页接口 GET /api/community/resource/detail?id=1
-```JSON
 
+资源详情页接口 GET /api/community/resource/detail?id=1
+
+```JSON
 {
 "code": 0,
 "data": {
@@ -146,9 +209,10 @@ funcpack.json 示例：
 }
 }
 ```
-资源接口 GET /api/community/resources
-```JSON
 
+资源接口 GET /api/community/resources
+
+```JSON
 {
 "code": 0,
 "data": [
@@ -170,17 +234,19 @@ funcpack.json 示例：
 ]
 }
 ```
+
 ### 如何添加新的代码块类型
+
 #### 1. 在 `CodeBlockType.java` 中添加新枚举
 
 ```java
 public enum CodeBlockType {
     // ... 现有代码块 ...
-    
+
     // 添加内容
 
-    
-    
+
+
     // ... 构造函数和其他方法保持不变 ...
 }
 ```
@@ -195,7 +261,7 @@ public static CodeBlockStructure getStructure(CodeBlockType type) {
 
     switch (type) {
         // ... 现有case ...
-        
+
         // IO操作
         case FILE_OPEN:
             return structure.addLabel("打开文件")
@@ -228,7 +294,7 @@ public static String generateCode(CodeBlockType type, List<Part> parts) {
 
     switch (type) {
         // ... 现有case ...
-        
+
         // IO操作
         case FILE_OPEN:
             code.append("file, err = io.open(")
@@ -252,7 +318,7 @@ public static String generateCode(CodeBlockType type, List<Part> parts) {
         case FILE_CLOSE:
             code.append("file:close()");
             break;
-            
+
 
         default:
             code.append(getInputValue(parts, 0));
@@ -285,4 +351,3 @@ public static List<CodeBlockTypeItem> createAllCategories() {
     return categories;
 }
 ```
-
