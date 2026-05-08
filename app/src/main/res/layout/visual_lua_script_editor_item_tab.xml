@@ -4,7 +4,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#E3F2FD"
+    android:background="@color/visual_editor_tab_bg"
     android:padding="8dp"
     android:layout_marginEnd="6dp"
     android:minWidth="80dp"
@@ -17,7 +17,7 @@
         android:text="主程序"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="#666666"
+        android:textColor="@color/visual_editor_tab_text"
         android:maxLines="1"
         android:ellipsize="end" />
 

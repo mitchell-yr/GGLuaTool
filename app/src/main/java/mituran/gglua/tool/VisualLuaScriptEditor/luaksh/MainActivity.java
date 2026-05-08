@@ -1,18 +1,27 @@
 package mituran.gglua.tool.VisualLuaScriptEditor.luaksh;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import mituran.gglua.tool.LuaEngine;
 import mituran.gglua.tool.R;
 
 public class MainActivity extends Activity {
@@ -30,9 +39,18 @@ public class MainActivity extends Activity {
 
     private String projectPath;
     private boolean hasUnsavedChanges = false;
-    private static final long AUTO_SAVE_INTERVAL = 60000;
+
+    // 自动保存相关
+    private boolean autoSaveEnabled = false;
+    private int autoSaveIntervalSec = 60;
     private android.os.Handler autoSaveHandler;
     private Runnable autoSaveRunnable;
+    private boolean autoBackupEnabled = false;
+
+    private static final String PREFS_NAME = "visual_lua_editor_settings";
+    private static final String KEY_AUTO_SAVE_ENABLED = "auto_save_enabled";
+    private static final String KEY_AUTO_SAVE_INTERVAL = "auto_save_interval_sec";
+    private static final String KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +62,107 @@ public class MainActivity extends Activity {
             projectPath = bundle.getString("path");
         }
 
+        loadSettings();
         initViews();
         initData();
         setupListeners();
-        setupAutoSave();
+        applyAutoSaveState();
     }
+
+    // ==================== 设置持久化 ====================
+
+    private void loadSettings() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        autoSaveEnabled = prefs.getBoolean(KEY_AUTO_SAVE_ENABLED, false);
+        autoSaveIntervalSec = prefs.getInt(KEY_AUTO_SAVE_INTERVAL, 60);
+        autoBackupEnabled = prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false);
+    }
+
+    private void saveSettings() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit()
+                .putBoolean(KEY_AUTO_SAVE_ENABLED, autoSaveEnabled)
+                .putInt(KEY_AUTO_SAVE_INTERVAL, autoSaveIntervalSec)
+                .putBoolean(KEY_AUTO_BACKUP_ENABLED, autoBackupEnabled)
+                .apply();
+    }
+
+    // ==================== 自动保存 ====================
+
+    private void applyAutoSaveState() {
+        stopAutoSave();
+        if (autoSaveEnabled) {
+            startAutoSave();
+        }
+    }
+
+    private void startAutoSave() {
+        if (autoSaveHandler == null) {
+            autoSaveHandler = new android.os.Handler();
+        }
+        autoSaveRunnable = new Runnable() {
+            @Override
+            public void run() {
+                saveProjectSilently();
+                saveProjectBackup();
+                if (autoSaveHandler != null) {
+                    autoSaveHandler.postDelayed(this, autoSaveIntervalSec * 1000L);
+                }
+            }
+        };
+        autoSaveHandler.postDelayed(autoSaveRunnable, autoSaveIntervalSec * 1000L);
+    }
+
+    private void stopAutoSave() {
+        if (autoSaveHandler != null && autoSaveRunnable != null) {
+            autoSaveHandler.removeCallbacks(autoSaveRunnable);
+            autoSaveRunnable = null;
+        }
+    }
+
+    private void saveProjectBackup() {
+        if (!autoBackupEnabled || projectPath == null) {
+            return;
+        }
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            String timestamp = sdf.format(new Date());
+            File backupDir = new File(projectPath);
+            if (!backupDir.exists()) {
+                backupDir.mkdirs();
+            }
+            File backupFile = new File(projectPath, "code_backup_" + timestamp + ".json");
+            ProjectManager.saveProject(projectPath, tabs);
+
+            // 复制当前 code.json 为备份文件
+            File currentFile = new File(projectPath, "code.json");
+            if (currentFile.exists()) {
+                java.io.FileInputStream fis = new java.io.FileInputStream(currentFile);
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(backupFile);
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = fis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+                fos.close();
+                fis.close();
+
+                // 限制备份数量，最多保留20个
+                File[] backups = backupDir.listFiles((dir, name) ->
+                        name.startsWith("code_backup_") && name.endsWith(".json"));
+                if (backups != null && backups.length > 20) {
+                    // 按文件名排序（时间戳排序），删除最旧的
+                    java.util.Arrays.sort(backups, (a, b) -> a.getName().compareTo(b.getName()));
+                    for (int i = 0; i < backups.length - 20; i++) {
+                        backups[i].delete();
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    // ==================== 初始化 ====================
 
     private void initViews() {
         customActionBar = findViewById(R.id.custom_action_bar);
@@ -70,7 +184,6 @@ public class MainActivity extends Activity {
                 currentTab = tabs.get(0);
                 Toast.makeText(this, "项目加载成功", Toast.LENGTH_SHORT).show();
             } else {
-                // 解析失败：先创建临时默认项目防止UI崩溃，然后弹出选择对话框
                 createDefaultProject();
                 showParseErrorDialog(result);
             }
@@ -114,11 +227,231 @@ public class MainActivity extends Activity {
     private void setupListeners() {
         customActionBar.setOnRunClickListener(v -> runCode());
         customActionBar.setOnSaveClickListener(v -> saveProject());
-        customActionBar.setOnAddBlockClickListener(v -> showExpandableBlockSelector(-1));
         customActionBar.setOnDefineFunctionClickListener(v -> createNewFunction());
-        customActionBar.setOnClearClickListener(v -> clearAllBlocks());
-        customActionBar.setOnExportClickListener(v -> exportCode());
+        customActionBar.setOnEditClickListener(v -> showEditMenu());
+        customActionBar.setOnSettingsClickListener(v -> showSettingsDialog());
     }
+
+    // ==================== 编辑菜单 ====================
+
+    private void showEditMenu() {
+        String[] items = {"保存", "导出代码", "清空代码块"};
+        new AlertDialog.Builder(this)
+                .setTitle("编辑")
+                .setItems(items, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            saveProject();
+                            break;
+                        case 1:
+                            exportCode();
+                            break;
+                        case 2:
+                            clearAllBlocks();
+                            break;
+                    }
+                })
+                .show();
+    }
+
+    // ==================== 设置对话框 ====================
+
+    private void showSettingsDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 20);
+
+        // 自动保存开关
+        LinearLayout autoSaveRow = new LinearLayout(this);
+        autoSaveRow.setOrientation(LinearLayout.HORIZONTAL);
+        autoSaveRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        TextView autoSaveLabel = new TextView(this);
+        autoSaveLabel.setText("自动保存");
+        autoSaveLabel.setTextSize(16);
+        autoSaveLabel.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        CheckBox autoSaveSwitch = new CheckBox(this);
+        autoSaveSwitch.setChecked(autoSaveEnabled);
+        autoSaveRow.addView(autoSaveLabel);
+        autoSaveRow.addView(autoSaveSwitch);
+        layout.addView(autoSaveRow);
+
+        // 自动保存间隔
+        LinearLayout intervalRow = new LinearLayout(this);
+        intervalRow.setOrientation(LinearLayout.HORIZONTAL);
+        intervalRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        intervalRow.setPadding(0, 12, 0, 0);
+
+        TextView intervalLabel = new TextView(this);
+        intervalLabel.setText("保存间隔(秒)");
+        intervalLabel.setTextSize(14);
+
+        EditText intervalInput = new EditText(this);
+        intervalInput.setText(String.valueOf(autoSaveIntervalSec));
+        intervalInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        intervalInput.setWidth(120);
+        intervalInput.setPadding(12, 4, 12, 4);
+
+        intervalRow.addView(intervalLabel);
+        intervalRow.addView(intervalInput);
+        layout.addView(intervalRow);
+
+        intervalRow.setVisibility(autoSaveEnabled ? View.VISIBLE : View.GONE);
+        intervalLabel.setVisibility(autoSaveEnabled ? View.VISIBLE : View.GONE);
+        intervalInput.setVisibility(autoSaveEnabled ? View.VISIBLE : View.GONE);
+
+        autoSaveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            intervalRow.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            intervalLabel.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            intervalInput.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        // 分隔线
+        View divider = new View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 2));
+        divider.setBackgroundColor(0xFFE0E0E0);
+        LinearLayout.LayoutParams dividerParams = (LinearLayout.LayoutParams) divider.getLayoutParams();
+        dividerParams.setMargins(0, 16, 0, 16);
+        divider.setLayoutParams(dividerParams);
+        layout.addView(divider);
+
+        // 自动备份开关
+        LinearLayout backupRow = new LinearLayout(this);
+        backupRow.setOrientation(LinearLayout.HORIZONTAL);
+        backupRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        TextView backupLabel = new TextView(this);
+        backupLabel.setText("自动备份");
+        backupLabel.setTextSize(16);
+        backupLabel.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        CheckBox backupSwitch = new CheckBox(this);
+        backupSwitch.setChecked(autoBackupEnabled);
+        backupRow.addView(backupLabel);
+        backupRow.addView(backupSwitch);
+        layout.addView(backupRow);
+
+        // 恢复备份按钮
+        LinearLayout restoreRow = new LinearLayout(this);
+        restoreRow.setOrientation(LinearLayout.HORIZONTAL);
+        restoreRow.setPadding(0, 12, 0, 0);
+
+        android.widget.Button restoreBtn = new android.widget.Button(this);
+        restoreBtn.setText("恢复备份");
+        restoreBtn.setTextSize(14);
+        restoreBtn.setOnClickListener(v -> showRestoreBackupDialog());
+        restoreRow.addView(restoreBtn);
+        layout.addView(restoreRow);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("设置");
+        builder.setView(layout);
+        builder.setPositiveButton("保存", (dialog, which) -> {
+            autoSaveEnabled = autoSaveSwitch.isChecked();
+            String intervalStr = intervalInput.getText().toString().trim();
+            if (!intervalStr.isEmpty()) {
+                try {
+                    int val = Integer.parseInt(intervalStr);
+                    if (val >= 5) {
+                        autoSaveIntervalSec = val;
+                    } else {
+                        Toast.makeText(this, "间隔不能少于5秒", Toast.LENGTH_SHORT).show();
+                        autoSaveIntervalSec = 5;
+                    }
+                } catch (NumberFormatException e) {
+                    autoSaveIntervalSec = 60;
+                }
+            }
+            autoBackupEnabled = backupSwitch.isChecked();
+            saveSettings();
+            applyAutoSaveState();
+            Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("取消", null);
+        builder.show();
+    }
+
+    // ==================== 恢复备份 ====================
+
+    private void showRestoreBackupDialog() {
+        if (projectPath == null) {
+            Toast.makeText(this, "无法获取项目路径", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File dir = new File(projectPath);
+        File[] backups = dir.listFiles((d, name) ->
+                name.startsWith("code_backup_") && name.endsWith(".json"));
+
+        if (backups == null || backups.length == 0) {
+            Toast.makeText(this, "没有可恢复的备份", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 按时间排序（新的在前）
+        java.util.Arrays.sort(backups, (a, b) -> b.getName().compareTo(a.getName()));
+
+        String[] names = new String[backups.length];
+        for (int i = 0; i < backups.length; i++) {
+            names[i] = backups[i].getName();
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("选择备份文件")
+                .setItems(names, (dialog, which) -> {
+                    restoreFromBackup(backups[which]);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void restoreFromBackup(File backupFile) {
+        new AlertDialog.Builder(this)
+                .setTitle("确认恢复")
+                .setMessage("确定要恢复备份 \"" + backupFile.getName() + "\" 吗？\n当前未保存的更改将丢失。")
+                .setPositiveButton("恢复", (dialog, which) -> {
+                    try {
+                        // 先保存当前状态为临时备份
+                        if (hasUnsavedChanges && projectPath != null) {
+                            saveProjectSilently();
+                        }
+
+                        // 复制备份文件覆盖 code.json
+                        File target = new File(projectPath, "code.json");
+                        java.io.FileInputStream fis = new java.io.FileInputStream(backupFile);
+                        java.io.FileOutputStream fos = new java.io.FileOutputStream(target);
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = fis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, length);
+                        }
+                        fos.close();
+                        fis.close();
+
+                        // 重新加载项目
+                        ProjectManager.ProjectLoadResult result = ProjectManager.loadProject(projectPath);
+                        if (result.isSuccess()) {
+                            tabs = result.tabs;
+                            currentTab = tabs.get(0);
+                            hasUnsavedChanges = false;
+                            refreshAdapters();
+                            Toast.makeText(this, "备份已恢复", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "备份文件解析失败", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(this, "恢复失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    // ==================== 标签页操作 ====================
 
     private void switchToTab(int position) {
         currentTab = tabs.get(position);
@@ -156,7 +489,7 @@ public class MainActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("重命名函数");
 
-        final android.widget.EditText input = new android.widget.EditText(this);
+        final EditText input = new EditText(this);
         input.setText(tab.getName());
         input.setHint("输入函数名称");
         builder.setView(input);
@@ -196,7 +529,7 @@ public class MainActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("定义新函数");
 
-        final android.widget.EditText input = new android.widget.EditText(this);
+        final EditText input = new EditText(this);
         input.setHint("输入函数名称（如: myFunction）");
         builder.setView(input);
 
@@ -213,7 +546,7 @@ public class MainActivity extends Activity {
 
                 CodeTab newTab = new CodeTab(UUID.randomUUID().toString(),
                         functionName, CodeTab.TabType.FUNCTION);
-                newTab.addStartBlock(); // 添加函数起始块
+                newTab.addStartBlock();
                 tabs.add(newTab);
                 tabAdapter.notifyItemInserted(tabs.size() - 1);
 
@@ -232,16 +565,13 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
+    // ==================== 代码块操作 ====================
+
     private void showBlockActionDialog(int position) {
         CodeBlock block = currentTab.getCodeBlocks().get(position);
 
-        // 特殊起始块只能编辑参数（对于函数起始块）
         if (block.getType().isSpecialStartBlock()) {
-            if (block.getType() == CodeBlockType.FUNCTION_START) {
-                Toast.makeText(this, "在输入框中编辑函数参数", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "这是程序入口标识块", Toast.LENGTH_SHORT).show();
-            }
+            showExpandableBlockSelector(position + 1);
             return;
         }
 
@@ -295,7 +625,7 @@ public class MainActivity extends Activity {
     private void showExpandableBlockSelector(int insertPosition) {
         List<CodeBlockTypeItem> categories = CodeBlockTypeItem.createAllCategories();
 
-        CodeBlockTypeItem customFunctions = new CodeBlockTypeItem("⚙️ 自定义函数");
+        CodeBlockTypeItem customFunctions = new CodeBlockTypeItem("自定义函数");
         for (CodeTab tab : tabs) {
             if (tab.getType() == CodeTab.TabType.FUNCTION) {
                 customFunctions.addDynamicBlockType(
@@ -427,7 +757,6 @@ public class MainActivity extends Activity {
             CodeBlock block = blocks.get(i);
             CodeBlockType type = block.getType();
 
-            // 跳过特殊起始块
             if (type.isSpecialStartBlock()) {
                 continue;
             }
@@ -449,7 +778,6 @@ public class MainActivity extends Activity {
         for (CodeBlock block : blocks) {
             CodeBlockType type = block.getType();
 
-            // 特殊起始块始终在最外层
             if (type.isSpecialStartBlock()) {
                 block.setIndentLevel(0);
                 continue;
@@ -477,7 +805,6 @@ public class MainActivity extends Activity {
     private void cutBlock(int position) {
         CodeBlock block = currentTab.getCodeBlocks().get(position);
 
-        // 不允许剪切特殊起始块
         if (block.getType().isSpecialStartBlock()) {
             Toast.makeText(this, "起始块不能剪切", Toast.LENGTH_SHORT).show();
             return;
@@ -498,7 +825,6 @@ public class MainActivity extends Activity {
             return;
         }
 
-        // 不允许粘贴特殊起始块
         if (clipboardBlock.getType().isSpecialStartBlock()) {
             Toast.makeText(this, "不能粘贴起始块", Toast.LENGTH_SHORT).show();
             return;
@@ -523,7 +849,6 @@ public class MainActivity extends Activity {
     private void deleteBlock(int position) {
         CodeBlock block = currentTab.getCodeBlocks().get(position);
 
-        // 不允许删除特殊起始块
         if (block.getType().isSpecialStartBlock()) {
             Toast.makeText(this, "起始块不能删除", Toast.LENGTH_SHORT).show();
             return;
@@ -543,7 +868,6 @@ public class MainActivity extends Activity {
                 .setMessage("确定要清空当前标签页的所有代码块吗?\n（起始块将保留）")
                 .setPositiveButton("确定", (dialog, which) -> {
                     List<CodeBlock> blocks = currentTab.getCodeBlocks();
-                    // 保留特殊起始块
                     if (blocks.size() > 1) {
                         CodeBlock startBlock = blocks.get(0);
                         blocks.clear();
@@ -560,29 +884,113 @@ public class MainActivity extends Activity {
                 .show();
     }
 
+    // ==================== 运行和导出 ====================
+
     private void runCode() {
+        // 先保存项目以确保代码最新
+        if (hasUnsavedChanges && projectPath != null) {
+            saveProjectSilently();
+        }
+
+        // 生成 Lua 代码
         String luaCode = generateLuaCode();
 
+        if (luaCode == null || luaCode.trim().isEmpty()) {
+            Toast.makeText(this, "脚本内容为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 每次执行时创建新的日志TextView，避免重复addView导致的崩溃
+        final TextView logView = new TextView(this);
+        logView.setTextSize(12);
+        logView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        logView.setPadding(16, 16, 16, 16);
+        logView.setTextIsSelectable(true);
+
+        // 创建新的LuaEngine绑定到新的logView
+        final LuaEngine engine = new LuaEngine(this, logView);
+        engine.initialize();
+
+        // 显示执行对话框
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("生成的Lua代码");
+        builder.setTitle("脚本运行中...");
+        builder.setCancelable(false);
 
         ScrollView scrollView = new ScrollView(this);
-        android.widget.TextView textView = new android.widget.TextView(this);
-        textView.setText(luaCode);
-        textView.setPadding(40, 40, 40, 40);
-        textView.setTextIsSelectable(true);
-        textView.setTextSize(14);
-        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
-        scrollView.addView(textView);
+        scrollView.addView(logView, new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT));
 
         builder.setView(scrollView);
-        builder.setPositiveButton("关闭", null);
-        builder.show();
+        builder.setPositiveButton("停止运行", null);
+        builder.setNegativeButton("查看代码", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // 设置停止按钮
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            engine.close();
+            dialog.dismiss();
+            Toast.makeText(this, "已停止", Toast.LENGTH_SHORT).show();
+        });
+
+        // 查看代码按钮
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            showCodeViewDialog(luaCode);
+        });
+
+        // 在新线程中执行脚本
+        new Thread(() -> {
+            try {
+                long startTime = System.currentTimeMillis();
+
+                engine.executeString(luaCode);
+
+                long elapsed = System.currentTimeMillis() - startTime;
+                runOnUiThread(() -> {
+                    dialog.setTitle("执行完成");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
+                    Toast.makeText(this, "脚本执行完成 (耗时 " + (elapsed / 1000.0) + " 秒)", Toast.LENGTH_SHORT).show();
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    dialog.setTitle("执行异常");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
+                    logView.append("[错误] " + e.getMessage() + "\n");
+                    Toast.makeText(this, "脚本执行异常: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示代码查看对话框
+     */
+    private void showCodeViewDialog(String luaCode) {
+        AlertDialog.Builder codeBuilder = new AlertDialog.Builder(this);
+        codeBuilder.setTitle("生成的Lua代码");
+
+        ScrollView codeScrollView = new ScrollView(this);
+        TextView codeView = new TextView(this);
+        codeView.setText(luaCode);
+        codeView.setPadding(40, 40, 40, 40);
+        codeView.setTextIsSelectable(true);
+        codeView.setTextSize(14);
+        codeView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        codeScrollView.addView(codeView);
+
+        codeBuilder.setView(codeScrollView);
+        codeBuilder.setPositiveButton("关闭", null);
+        codeBuilder.show();
     }
 
     private void exportCode() {
         String luaCode = generateLuaCode();
-        Toast.makeText(this, "导出功能待实现\n代码已复制到剪贴板", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "代码已复制到剪贴板", Toast.LENGTH_SHORT).show();
 
         android.content.ClipboardManager clipboard =
                 (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
@@ -593,14 +1001,11 @@ public class MainActivity extends Activity {
     private String generateLuaCode() {
         StringBuilder sb = new StringBuilder();
 
-        // 首先生成所有函数
         for (CodeTab tab : tabs) {
             if (tab.getType() == CodeTab.TabType.FUNCTION && !tab.getCodeBlocks().isEmpty()) {
-                // 使用函数头生成方法（包含参数）
                 sb.append(tab.generateFunctionHeader()).append("\n");
 
                 for (CodeBlock block : tab.getCodeBlocks()) {
-                    // 跳过特殊起始块
                     if (block.getType().isSpecialStartBlock()) {
                         continue;
                     }
@@ -618,11 +1023,9 @@ public class MainActivity extends Activity {
             }
         }
 
-        // 然后生成主程序
         CodeTab mainTab = tabs.get(0);
         sb.append("-- 主程序\n");
         for (CodeBlock block : mainTab.getCodeBlocks()) {
-            // 跳过特殊起始块
             if (block.getType().isSpecialStartBlock()) {
                 continue;
             }
@@ -639,17 +1042,16 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
+    // ==================== 项目管理 ====================
+
     private void createDefaultProject() {
         tabs = new ArrayList<>();
         CodeTab mainTab = new CodeTab(UUID.randomUUID().toString(), "主程序", CodeTab.TabType.MAIN);
-        mainTab.addStartBlock(); // 添加主程序起始块
+        mainTab.addStartBlock();
         tabs.add(mainTab);
         currentTab = mainTab;
     }
 
-    /**
-     * 解析失败时显示三选对话框：覆盖、取消并退出、尝试修复
-     */
     private void showParseErrorDialog(ProjectManager.ProjectLoadResult result) {
         String message = "项目文件解析失败，请选择处理方式：\n\n"
                 + "错误原因: " + result.errorMessage;
@@ -657,10 +1059,9 @@ public class MainActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("项目解析失败");
         builder.setMessage(message);
-        builder.setCancelable(false); // 不允许点击外部取消
+        builder.setCancelable(false);
 
         builder.setPositiveButton("覆盖", (dialog, which) -> {
-            // 保留已创建的默认项目并立即保存
             if (projectPath != null) {
                 ProjectManager.saveProject(projectPath, tabs);
             }
@@ -680,11 +1081,7 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
-    /**
-     * 显示修复建议对话框，包含解析失败的代码、版本差异和修复建议
-     */
     private void showRepairDialog(ProjectManager.ProjectLoadResult result) {
-        // 构建修复建议内容
         StringBuilder suggestions = new StringBuilder();
         if ("PARSE_ERROR".equals(result.errorType)) {
             String detail = result.errorDetail != null ? result.errorDetail : "";
@@ -719,7 +1116,6 @@ public class MainActivity extends Activity {
             suggestions.append("3. 如果无法修复，请选择'覆盖'重新创建项目\n");
         }
 
-        // 构建完整信息
         StringBuilder info = new StringBuilder();
         info.append("【错误信息】\n");
         info.append(result.errorMessage != null ? result.errorMessage : "未知错误");
@@ -738,7 +1134,6 @@ public class MainActivity extends Activity {
         info.append("【").append(suggestions).append("】\n");
 
         info.append("\n【解析失败的文件内容】\n");
-        // 限制显示长度，避免对话框过大
         String formatted = result.getFormattedContent();
         if (formatted.length() > 3000) {
             formatted = formatted.substring(0, 3000) + "\n... (内容过长，已截断，完整内容请查看 code.json)";
@@ -748,9 +1143,8 @@ public class MainActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("修复建议");
 
-        // 使用ScrollView包裹内容
         ScrollView scrollView = new ScrollView(this);
-        android.widget.TextView textView = new android.widget.TextView(this);
+        TextView textView = new TextView(this);
         textView.setText(info.toString());
         textView.setPadding(40, 40, 40, 40);
         textView.setTextIsSelectable(true);
@@ -778,15 +1172,14 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
-    /**
-     * 刷新适配器显示（覆盖后重新绑定数据）
-     */
     private void refreshAdapters() {
         tabAdapter.notifyDataSetChanged();
         codeBlockAdapter.updateCodeBlocks(currentTab.getCodeBlocks());
         codeBlockAdapter.notifyDataSetChanged();
         codeBlockRecyclerView.recalculateWidth();
     }
+
+    // ==================== 保存 ====================
 
     private void saveProject() {
         if (projectPath == null) {
@@ -814,17 +1207,7 @@ public class MainActivity extends Activity {
         hasUnsavedChanges = true;
     }
 
-    private void setupAutoSave() {
-        autoSaveHandler = new android.os.Handler();
-        autoSaveRunnable = new Runnable() {
-            @Override
-            public void run() {
-                saveProjectSilently();
-                autoSaveHandler.postDelayed(this, AUTO_SAVE_INTERVAL);
-            }
-        };
-        autoSaveHandler.postDelayed(autoSaveRunnable, AUTO_SAVE_INTERVAL);
-    }
+    // ==================== 生命周期 ====================
 
     @Override
     protected void onPause() {

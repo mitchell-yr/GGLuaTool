@@ -26,4 +26,20 @@
     <color name="log_debug">#2196F3</color>
 
     <color name="bg_gray">#F5F5F5</color>
+
+    <!-- 可视化Lua编辑器颜色 -->
+    <color name="visual_editor_bg">#F5F5F5</color>
+    <color name="visual_editor_surface">#FFFFFF</color>
+    <color name="visual_editor_divider">#E0E0E0</color>
+    <color name="visual_editor_tab_bg">#E8E0F0</color>
+    <color name="visual_editor_tab_selected_bg">#FFFFFF</color>
+    <color name="visual_editor_tab_text">#757575</color>
+    <color name="visual_editor_tab_text_selected">#6200EE</color>
+    <color name="visual_editor_category_text">#333333</color>
+    <color name="visual_editor_category_icon">#757575</color>
+    <color name="visual_editor_block_type_text">#555555</color>
+    <color name="visual_editor_action_bar_bg">#6200EE</color>
+    <color name="visual_editor_action_bar_text">#FFFFFF</color>
+    <color name="visual_editor_action_btn_normal">#6200EE</color>
+    <color name="visual_editor_action_btn_pressed">#3700B3</color>
 </resources>

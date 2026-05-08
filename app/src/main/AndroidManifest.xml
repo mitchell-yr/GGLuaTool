@@ -115,7 +115,8 @@
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
             android:name=".VisualLuaScriptEditor.luaksh.MainActivity"
-            android:label="lua可视化">
+            android:label="lua可视化"
+            android:theme="@style/Theme.悠然GG助手">
         </activity>
         <activity
             android:name=".apktools.ModifierActivity"

@@ -23,7 +23,7 @@
         android:layout_weight="1"
         android:text="代码块名称"
         android:textSize="15sp"
-        android:textColor="#555555"
+        android:textColor="@color/visual_editor_block_type_text"
         android:paddingTop="8dp"
         android:paddingBottom="8dp" />
 

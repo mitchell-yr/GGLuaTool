@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/visual_editor_bg">
 
     <!-- 自定义ActionBar -->
     <mituran.gglua.tool.VisualLuaScriptEditor.luaksh.CustomActionBar
@@ -17,7 +17,7 @@
         android:id="@+id/tab_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
+        android:background="@color/visual_editor_surface"
         android:elevation="2dp"
         android:paddingTop="6dp"
         android:paddingBottom="6dp"
@@ -29,7 +29,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#E0E0E0" />
+        android:background="@color/visual_editor_divider" />
 
     <!-- 代码块区域（整体横向+纵向滚动） -->
     <HorizontalScrollView

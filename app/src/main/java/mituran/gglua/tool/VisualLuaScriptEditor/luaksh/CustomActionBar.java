@@ -5,17 +5,17 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import mituran.gglua.tool.R;
 
 public class CustomActionBar extends LinearLayout {
-    private Button btnRun;
-    private Button btnSave;
-    private Button btnAddBlock;
     private Button btnDefineFunction;
-    private Button btnClear;
-    private Button btnExport;
+    private ImageButton btnRun;
+    private ImageButton btnSave;
+    private ImageButton btnEdit;
+    private ImageButton btnSettings;
 
     public CustomActionBar(Context context) {
         super(context);
@@ -30,12 +30,15 @@ public class CustomActionBar extends LinearLayout {
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.visual_lua_script_editor_custom_action_bar, this, true);
 
+        btnDefineFunction = findViewById(R.id.btn_define_function);
         btnRun = findViewById(R.id.btn_run);
         btnSave = findViewById(R.id.btn_save);
-        btnAddBlock = findViewById(R.id.btn_add_block);
-        btnDefineFunction = findViewById(R.id.btn_define_function);
-        btnClear = findViewById(R.id.btn_clear);
-        btnExport = findViewById(R.id.btn_export);
+        btnEdit = findViewById(R.id.btn_edit);
+        btnSettings = findViewById(R.id.btn_settings);
+    }
+
+    public void setOnDefineFunctionClickListener(OnClickListener listener) {
+        btnDefineFunction.setOnClickListener(listener);
     }
 
     public void setOnRunClickListener(OnClickListener listener) {
@@ -46,19 +49,11 @@ public class CustomActionBar extends LinearLayout {
         btnSave.setOnClickListener(listener);
     }
 
-    public void setOnAddBlockClickListener(OnClickListener listener) {
-        btnAddBlock.setOnClickListener(listener);
+    public void setOnEditClickListener(OnClickListener listener) {
+        btnEdit.setOnClickListener(listener);
     }
 
-    public void setOnDefineFunctionClickListener(OnClickListener listener) {
-        btnDefineFunction.setOnClickListener(listener);
-    }
-
-    public void setOnClearClickListener(OnClickListener listener) {
-        btnClear.setOnClickListener(listener);
-    }
-
-    public void setOnExportClickListener(OnClickListener listener) {
-        btnExport.setOnClickListener(listener);
+    public void setOnSettingsClickListener(OnClickListener listener) {
+        btnSettings.setOnClickListener(listener);
     }
 }

@@ -1,103 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#2196F3"
-    android:scrollbars="none">
+    android:background="@color/visual_editor_action_bar_bg"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:gravity="center_vertical">
 
-    <LinearLayout
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:gravity="center_vertical">
+        android:text="Lua编辑器"
+        android:textColor="@color/visual_editor_action_bar_text"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingEnd="12dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lua编辑器"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:paddingStart="8dp"
-            android:paddingEnd="16dp" />
+    <Button
+        android:id="@+id/btn_define_function"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:text="定义函数"
+        android:textColor="@color/visual_editor_action_bar_text"
+        android:textSize="12sp"
+        android:background="@drawable/btn_action_bar"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:layout_marginEnd="4dp"
+        android:minWidth="0dp" />
 
-        <Button
-            android:id="@+id/btn_add_block"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="➕ 添加块"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="4dp"
-            android:minWidth="0dp" />
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-        <Button
-            android:id="@+id/btn_define_function"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="⚙️ 定义函数"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="4dp"
-            android:minWidth="0dp" />
+    <ImageButton
+        android:id="@+id/btn_run"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_run"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="运行"
+        android:layout_marginEnd="2dp" />
 
-        <Button
-            android:id="@+id/btn_run"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="▶ 运行"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="4dp"
-            android:minWidth="0dp" />
+    <ImageButton
+        android:id="@+id/btn_save"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_save"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="保存"
+        android:layout_marginEnd="2dp" />
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="💾 保存"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="4dp"
-            android:minWidth="0dp" />
+    <ImageButton
+        android:id="@+id/btn_edit"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_edit"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="编辑"
+        android:layout_marginEnd="2dp" />
 
-        <Button
-            android:id="@+id/btn_export"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="📤 导出"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="4dp"
-            android:minWidth="0dp" />
+    <ImageButton
+        android:id="@+id/btn_settings"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_settings"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="设置" />
 
-        <Button
-            android:id="@+id/btn_clear"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="🗑 清空"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/btn_action_bar"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:minWidth="0dp" />
-
-    </LinearLayout>
-</HorizontalScrollView>
+</LinearLayout>

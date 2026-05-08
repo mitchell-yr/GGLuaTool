@@ -1,13 +1,13 @@
 package mituran.gglua.tool.VisualLuaScriptEditor.luaksh;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -43,19 +43,15 @@ public class TabAdapter extends RecyclerView.Adapter<TabAdapter.ViewHolder> {
         CodeTab tab = tabs.get(position);
 
         // 设置标签名称
-        if (tab.getType() == CodeTab.TabType.MAIN) {
-            holder.tabName.setText("📝 " + tab.getName());
-        } else {
-            holder.tabName.setText("⚙️ " + tab.getName());
-        }
+        holder.tabName.setText(tab.getName());
 
         // 设置选中状态
         if (position == selectedPosition) {
-            holder.tabContainer.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            holder.tabName.setTextColor(Color.parseColor("#2196F3"));
+            holder.tabContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.visual_editor_tab_selected_bg));
+            holder.tabName.setTextColor(ContextCompat.getColor(context, R.color.visual_editor_tab_text_selected));
         } else {
-            holder.tabContainer.setBackgroundColor(Color.parseColor("#E3F2FD"));
-            holder.tabName.setTextColor(Color.parseColor("#666666"));
+            holder.tabContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.visual_editor_tab_bg));
+            holder.tabName.setTextColor(ContextCompat.getColor(context, R.color.visual_editor_tab_text));
         }
 
         // 点击事件

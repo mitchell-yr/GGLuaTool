@@ -2,13 +2,13 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#1976D2" />
+            <solid android:color="@color/visual_editor_action_btn_pressed" />
             <corners android:radius="4dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#2196F3" />
+            <solid android:color="@color/visual_editor_action_btn_normal" />
             <corners android:radius="4dp" />
         </shape>
     </item>
