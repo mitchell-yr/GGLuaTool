@@ -17,11 +17,18 @@ import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -40,12 +47,20 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.apk.axml.aXMLDecoder;
+import com.apk.axml.serializableItems.XMLEntry;
 
 import mituran.gglua.tool.R;
 import mituran.gglua.tool.apktools.apksign.KeyStoreGenerator;
@@ -81,6 +96,9 @@ public class ModifierActivity extends AppCompatActivity {
     private MaterialCheckBox cbUiBeautify;
     private LinearLayout layoutUiBeautifyList;
 
+    private Button btnSavePreset;
+    private Button btnLoadPreset;
+
     private ExtendedFloatingActionButton fabStart;
 
     // ==================== 数据变量 ====================
@@ -91,6 +109,11 @@ public class ModifierActivity extends AppCompatActivity {
     private String pendingInstallPath = null;
 
     private ProgressDialog progressDialog;
+
+    // 已分析到的启动入口信息
+    private boolean hasMultipleLauncherEntries = false;
+    private String hwLauncherActivityName = null;
+    private String swLauncherActivityName = null;
 
     // ==================== 函数管理数据 ====================
 
@@ -133,6 +156,7 @@ public class ModifierActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> scriptPickerLauncher;
     private ActivityResultLauncher<Intent> installPermissionLauncher;
     private ActivityResultLauncher<Intent> funcPackPickerLauncher;
+    private ActivityResultLauncher<Intent> presetPickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,6 +225,9 @@ public class ModifierActivity extends AppCompatActivity {
         cbUiBeautify = findViewById(R.id.cb_ui_beautify);
         layoutUiBeautifyList = findViewById(R.id.layout_uiBeautify_list);
 
+        btnSavePreset = findViewById(R.id.btn_save_preset);
+        btnLoadPreset = findViewById(R.id.btn_load_preset);
+
         fabStart = findViewById(R.id.fab_start);
     }
 
@@ -260,6 +287,16 @@ public class ModifierActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        presetPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) handlePresetImport(uri);
+                    }
+                }
+        );
     }
 
     private void setupListeners() {
@@ -269,9 +306,15 @@ public class ModifierActivity extends AppCompatActivity {
         btnChangeIcon.setOnClickListener(v -> selectIcon());
 
         cbDeleteEntry.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            rgEntryType.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-            if (isChecked && rgEntryType.getCheckedRadioButtonId() == -1) {
-                rbHwAccel.setChecked(true);
+            // 只有同时存在 HW 和 SW 两种入口时才显示选择面板
+            if (isChecked && hasMultipleLauncherEntries
+                    && hwLauncherActivityName != null && swLauncherActivityName != null) {
+                rgEntryType.setVisibility(View.VISIBLE);
+                if (rgEntryType.getCheckedRadioButtonId() == -1) {
+                    rbHwAccel.setChecked(true);
+                }
+            } else {
+                rgEntryType.setVisibility(View.GONE);
             }
         });
 
@@ -307,6 +350,9 @@ public class ModifierActivity extends AppCompatActivity {
         });
 
         fabStart.setOnClickListener(v -> startModification());
+
+        btnSavePreset.setOnClickListener(v -> showSavePresetDialog());
+        btnLoadPreset.setOnClickListener(v -> showLoadPresetDialog());
     }
 
     // ==================== ★ 函数选择弹窗 ====================
@@ -568,8 +614,132 @@ public class ModifierActivity extends AppCompatActivity {
     }
 
     private void selectInstalledApp() {
-        Toast.makeText(this, "已安装应用选择功能待实现", Toast.LENGTH_SHORT).show();
-        showSourceSelectionDialog();
+        PackageManager pm = getPackageManager();
+        List<PackageInfo> packages = pm.getInstalledPackages(0);
+
+        if (packages == null || packages.isEmpty()) {
+            Toast.makeText(this, "未找到已安装应用", Toast.LENGTH_SHORT).show();
+            showSourceSelectionDialog();
+            return;
+        }
+
+        // 按应用名称字母排序
+        Collections.sort(packages, (a, b) -> {
+            String nameA = a.applicationInfo.loadLabel(pm).toString();
+            String nameB = b.applicationInfo.loadLabel(pm).toString();
+            return nameA.compareToIgnoreCase(nameB);
+        });
+
+        // 使用自定义布局：搜索框 + 列表
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_installed_app_picker, null);
+        EditText etSearch = dialogView.findViewById(R.id.et_search);
+        ListView lvApps = dialogView.findViewById(R.id.lv_apps);
+
+        InstalledAppAdapter adapter = new InstalledAppAdapter(packages, pm);
+        lvApps.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("选择已安装应用（共" + packages.size() + "个）")
+                .setView(dialogView)
+                .setNegativeButton("返回", (d, w) -> showSourceSelectionDialog())
+                .setCancelable(false)
+                .create();
+
+        lvApps.setOnItemClickListener((parent, view, position, id) -> {
+            dialog.dismiss();
+            PackageInfo info = adapter.getItem(position);
+            onInstalledAppSelected(info.packageName);
+        });
+
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString().trim());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        dialog.show();
+    }
+
+    /** 已安装应用列表适配器（支持搜索过滤） */
+    private class InstalledAppAdapter extends BaseAdapter {
+        private final List<PackageInfo> allApps;
+        private final List<PackageInfo> filteredApps;
+        private final PackageManager pm;
+
+        InstalledAppAdapter(List<PackageInfo> apps, PackageManager pm) {
+            this.allApps = apps;
+            this.filteredApps = new ArrayList<>(apps);
+            this.pm = pm;
+        }
+
+        public void filter(String text) {
+            filteredApps.clear();
+            if (text.isEmpty()) {
+                filteredApps.addAll(allApps);
+            } else {
+                String lowerText = text.toLowerCase();
+                for (PackageInfo info : allApps) {
+                    String name = info.applicationInfo.loadLabel(pm).toString().toLowerCase();
+                    String pkg = info.packageName.toLowerCase();
+                    if (name.contains(lowerText) || pkg.contains(lowerText)) {
+                        filteredApps.add(info);
+                    }
+                }
+            }
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return filteredApps.size();
+        }
+
+        @Override
+        public PackageInfo getItem(int position) {
+            return filteredApps.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.item_installed_app, parent, false);
+                holder = new ViewHolder();
+                holder.ivIcon = convertView.findViewById(R.id.iv_app_icon);
+                holder.tvName = convertView.findViewById(R.id.tv_app_name);
+                holder.tvPackage = convertView.findViewById(R.id.tv_app_package);
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+            PackageInfo info = filteredApps.get(position);
+            holder.ivIcon.setImageDrawable(info.applicationInfo.loadIcon(pm));
+            holder.tvName.setText(info.applicationInfo.loadLabel(pm));
+            holder.tvPackage.setText(info.packageName);
+
+            return convertView;
+        }
+
+        class ViewHolder {
+            ImageView ivIcon;
+            TextView tvName;
+            TextView tvPackage;
+        }
     }
 
     public void onInstalledAppSelected(String packageName) {
@@ -668,6 +838,93 @@ public class ModifierActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        // 加载完成后分析 AndroidManifest 中的启动入口
+        if (apkPath != null) {
+            analyzeApkManifest(apkPath);
+        }
+    }
+
+    /** 分析 APK 的 AndroidManifest.xml 中是否有多个启动入口 */
+    private void analyzeApkManifest(String apkPath) {
+        // 重置状态
+        hasMultipleLauncherEntries = false;
+        hwLauncherActivityName = null;
+        swLauncherActivityName = null;
+
+        try (ZipFile zipFile = new ZipFile(apkPath)) {
+            ZipEntry manifestEntry = zipFile.getEntry("AndroidManifest.xml");
+            if (manifestEntry == null) {
+                updateEntryDeleteUI(false, false, false);
+                return;
+            }
+
+            InputStream is = zipFile.getInputStream(manifestEntry);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = is.read(buffer)) > 0) {
+                baos.write(buffer, 0, len);
+            }
+            is.close();
+
+            aXMLDecoder decoder = new aXMLDecoder(new ByteArrayInputStream(baos.toByteArray()));
+            List<XMLEntry> xmlEntries = decoder.decode();
+
+            ManifestModifier modifier = new ManifestModifier(xmlEntries);
+            ManifestModifier.LauncherEntryInfo info = modifier.analyzeLauncherEntries();
+
+            ManifestModifier.LauncherActivity hwEntry = info.getHwEntry();
+            ManifestModifier.LauncherActivity swEntry = info.getSwEntry();
+
+            boolean hasHw = hwEntry != null;
+            boolean hasSw = swEntry != null;
+            boolean hasMultiple = info.hasMultipleEntries;
+
+            hasMultipleLauncherEntries = hasMultiple;
+            hwLauncherActivityName = hasHw ? hwEntry.activityName : null;
+            swLauncherActivityName = hasSw ? swEntry.activityName : null;
+
+            updateEntryDeleteUI(hasMultiple, hasHw, hasSw);
+
+        } catch (Exception e) {
+            // 分析失败，禁用删除入口选项
+            updateEntryDeleteUI(false, false, false);
+            e.printStackTrace();
+        }
+    }
+
+    /** 根据分析结果更新"删除多余启动入口"相关控件的状态 */
+    private void updateEntryDeleteUI(boolean hasMultiple, boolean hasHw, boolean hasSw) {
+        if (hasMultiple) {
+            cbDeleteEntry.setEnabled(true);
+
+            // 根据实际存在的入口类型设置 RadioGroup 可见的选项
+            rbHwAccel.setEnabled(hasHw);
+            rbSwAccel.setEnabled(hasSw);
+
+            // 如果只有一个类型可用，预选那个
+            if (hasHw && !hasSw) {
+                rbHwAccel.setChecked(true);
+            } else if (!hasHw && hasSw) {
+                rbSwAccel.setChecked(true);
+            } else {
+                // 两个都有，默认保留 HW
+                rbHwAccel.setChecked(true);
+            }
+
+            // 为只有一种类型的情况，隐藏 RadioGroup（无需选择）
+            if (hasHw && hasSw) {
+                rgEntryType.setVisibility(cbDeleteEntry.isChecked() ? View.VISIBLE : View.GONE);
+            } else {
+                // 只有一个入口类型，默认就是保留那唯一的一个
+                rgEntryType.setVisibility(View.GONE);
+            }
+        } else {
+            cbDeleteEntry.setEnabled(false);
+            cbDeleteEntry.setChecked(false);
+            rgEntryType.setVisibility(View.GONE);
         }
     }
 
@@ -779,6 +1036,267 @@ public class ModifierActivity extends AppCompatActivity {
         return result;
     }
 
+    // ==================== 预设管理 ====================
+
+    /** 保存预设对话框 */
+    private void showSavePresetDialog() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("输入预设名称");
+        input.setSingleLine(true);
+
+        new AlertDialog.Builder(this)
+                .setTitle("保存修改预设")
+                .setMessage("将当前所有修改项保存为预设，方便下次快速加载。")
+                .setView(input)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (name.isEmpty()) {
+                        Toast.makeText(this, "名称不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    doSavePreset(name);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void doSavePreset(String name) {
+        // 检查是否已存在同名预设
+        List<ModifyPreset.PresetInfo> existing = ModifyPreset.loadAll();
+        boolean exists = false;
+        for (ModifyPreset.PresetInfo p : existing) {
+            if (p.name.equals(name)) { exists = true; break; }
+        }
+
+        if (exists) {
+            new AlertDialog.Builder(this)
+                    .setTitle("预设已存在")
+                    .setMessage("本地已有预设\"" + name + "\"，是否覆盖？")
+                    .setPositiveButton("覆盖", (d, w) -> performSave(name))
+                    .setNegativeButton("取消", null)
+                    .show();
+        } else {
+            performSave(name);
+        }
+    }
+
+    private void performSave(String name) {
+        try {
+            ModifyOptions options = collectModifyOptions();
+            ModifyPreset.PresetInfo info = ModifyPreset.PresetInfo.fromModifyOptions(options, name);
+            ModifyPreset.save(info);
+            Toast.makeText(this, "预设已保存: " + name, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** 加载预设对话框 - 显示已保存的预设列表 */
+    private void showLoadPresetDialog() {
+        List<ModifyPreset.PresetInfo> presets = ModifyPreset.loadAll();
+
+        if (presets.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("加载预设")
+                    .setMessage("暂无已保存的预设。\n\n你可以通过以下方式添加预设：\n1. 配置修改项后点击\"保存预设\"\n2. 点击\"从文件导入\"加载外部预设")
+                    .setPositiveButton("从文件导入", (d, w) -> openPresetFilePicker())
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+
+        // 构建预设列表字符串
+        String[] presetNames = new String[presets.size()];
+        for (int i = 0; i < presets.size(); i++) {
+            ModifyPreset.PresetInfo p = presets.get(i);
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            presetNames[i] = p.name + "  (" + sdf.format(new java.util.Date(p.timestamp)) + ")";
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("加载预设 (" + presets.size() + "个)")
+                .setItems(presetNames, (dialog, which) -> {
+                    ModifyPreset.PresetInfo selected = presets.get(which);
+                    showPresetPreviewDialog(selected);
+                })
+                .setPositiveButton("从文件导入", (d, w) -> openPresetFilePicker())
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 预设预览确认对话框 */
+    private void showPresetPreviewDialog(ModifyPreset.PresetInfo preset) {
+        StringBuilder summary = new StringBuilder();
+        if (!preset.newAppName.isEmpty()) summary.append("• 应用名: ").append(preset.newAppName).append("\n");
+        if (!preset.newPackageName.isEmpty()) summary.append("• 包名: ").append(preset.newPackageName).append("\n");
+        if (!preset.newVersionName.isEmpty()) summary.append("• 版本: ").append(preset.newVersionName).append("\n");
+        if (preset.newIconPath != null) summary.append("• 修改图标: 是\n");
+        if (preset.deleteEntry) summary.append("• 删除多余启动入口: 是\n");
+        if (preset.embedScript) summary.append("• 内置脚本: 是\n");
+        if (preset.slimApk) summary.append("• 精简APK: 是\n");
+        if (preset.addFunctions) {
+            int count = preset.selectedFunctionNames != null ? preset.selectedFunctionNames.size() : 0;
+            summary.append("• 函数添加: ").append(count).append("个\n");
+        }
+        if (preset.uiBeautify) summary.append("• UI美化: 是\n");
+
+        if (summary.length() == 0) summary.append("（空预设 - 无配置项）\n");
+
+        new AlertDialog.Builder(this)
+                .setTitle("预设: " + preset.name)
+                .setMessage(summary.toString())
+                .setPositiveButton("应用", (d, w) -> applyPreset(preset))
+                .setNeutralButton("删除", (d, w) -> confirmDeletePreset(preset))
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 删除预设确认 */
+    private void confirmDeletePreset(ModifyPreset.PresetInfo preset) {
+        new AlertDialog.Builder(this)
+                .setTitle("删除预设")
+                .setMessage("确定要删除预设\"" + preset.name + "\"吗？此操作不可撤销。")
+                .setPositiveButton("删除", (d, w) -> {
+                    ModifyPreset.delete(preset.name);
+                    Toast.makeText(this, "已删除: " + preset.name, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /** 将预设数据应用到 UI 控件 */
+    private void applyPreset(ModifyPreset.PresetInfo preset) {
+        // 基础信息
+        etAppName.setText(preset.newAppName);
+        etPackageName.setText(preset.newPackageName);
+        etVersionName.setText(preset.newVersionName);
+        newIconPath = preset.newIconPath;
+        if (newIconPath != null) {
+            File iconFile = new File(newIconPath);
+            if (iconFile.exists()) {
+                imgAppIcon.setImageURI(android.net.Uri.fromFile(iconFile));
+            }
+        }
+
+        // 启动入口
+        cbDeleteEntry.setChecked(preset.deleteEntry);
+        if (preset.deleteEntry) {
+            if (preset.keepHwAccel) {
+                rbHwAccel.setChecked(true);
+            } else if (preset.keepSwAccel) {
+                rbSwAccel.setChecked(true);
+            }
+        }
+
+        // 内置脚本
+        cbScript.setChecked(preset.embedScript);
+        if (preset.embedScript && preset.scriptPath != null) {
+            scriptPath = preset.scriptPath;
+            btnSelectScript.setText(new File(preset.scriptPath).getName());
+        }
+
+        // 精简
+        cbSlim.setChecked(preset.slimApk);
+        if (preset.slimApk) {
+            cbSlimArsc.setChecked(preset.slimArsc);
+            cbSlimRes.setChecked(preset.slimRes);
+            cbSlimDex.setChecked(preset.slimDex);
+        }
+
+        // 函数添加
+        cbAddFunctions.setChecked(preset.addFunctions);
+        if (preset.addFunctions && preset.selectedFunctionNames != null) {
+            selectedFunctions.clear();
+            for (String funcName : preset.selectedFunctionNames) {
+                boolean isBuiltin = funcName.startsWith("[内置]");
+                String pureName = funcName.replaceFirst("^\\[(内置|自定义)\\]\\s*", "");
+                FunctionItem item = new FunctionItem(pureName, "", isBuiltin);
+                if (isBuiltin) {
+                    for (FunctionItem bf : builtinFunctions) {
+                        if (bf.name.equals(pureName)) { item = bf; break; }
+                    }
+                } else {
+                    for (FunctionItem cf : customFunctions) {
+                        if (cf.name.equals(pureName)) { item = cf; break; }
+                    }
+                }
+                selectedFunctions.add(item);
+            }
+            refreshSelectedFunctionsList();
+        }
+
+        // UI美化
+        cbUiBeautify.setChecked(preset.uiBeautify);
+
+        Toast.makeText(this, "预设已应用: " + preset.name, Toast.LENGTH_SHORT).show();
+    }
+
+    /** 打开文件选择器导入外部 .ggpreset 文件 */
+    private void openPresetFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        presetPickerLauncher.launch(Intent.createChooser(intent, "选择 .ggpreset 预设文件"));
+    }
+
+    /** 处理从文件选择器返回的 .ggpreset 文件 */
+    private void handlePresetImport(Uri uri) {
+        try {
+            String fileName = getFileNameFromUri(uri);
+            if (fileName == null || !fileName.endsWith(ModifyPreset.EXTENSION)) {
+                Toast.makeText(this, "请选择 " + ModifyPreset.EXTENSION + " 格式的预设文件", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            File cacheFile = new File(getCacheDir(), "import_" + System.currentTimeMillis() + ModifyPreset.EXTENSION);
+            try (InputStream is = getContentResolver().openInputStream(uri);
+                 FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                if (is == null) throw new Exception("无法读取文件");
+                byte[] buf = new byte[4096];
+                int len;
+                while ((len = is.read(buf)) > 0) fos.write(buf, 0, len);
+            }
+
+            ModifyPreset.PresetInfo preset = ModifyPreset.importPreset(cacheFile);
+            cacheFile.delete();
+
+            // 检查是否同名预设已存在
+            List<ModifyPreset.PresetInfo> existing = ModifyPreset.loadAll();
+            boolean exists = false;
+            for (ModifyPreset.PresetInfo p : existing) {
+                if (p.name.equals(preset.name)) { exists = true; break; }
+            }
+
+            if (exists) {
+                new AlertDialog.Builder(this)
+                        .setTitle("预设已存在")
+                        .setMessage("本地已有预设\"" + preset.name + "\"，是否覆盖？")
+                        .setPositiveButton("覆盖", (d, w) -> {
+                            try {
+                                ModifyPreset.save(preset);
+                                Toast.makeText(this, "已覆盖: " + preset.name, Toast.LENGTH_SHORT).show();
+                                showPresetPreviewDialog(preset);
+                            } catch (Exception e) {
+                                Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            } else {
+                ModifyPreset.save(preset);
+                Toast.makeText(this, "导入成功: " + preset.name, Toast.LENGTH_SHORT).show();
+                showPresetPreviewDialog(preset);
+            }
+
+        } catch (Exception e) {
+            new AlertDialog.Builder(this)
+                    .setTitle("导入失败")
+                    .setMessage(e.getMessage())
+                    .setPositiveButton("确定", null)
+                    .show();
+        }
+    }
+
     // ==================== 开始修改 ====================
 
     private void startModification() {
@@ -818,6 +1336,8 @@ public class ModifierActivity extends AppCompatActivity {
         if (options.deleteEntry) {
             options.keepHwAccel = rbHwAccel.isChecked();
             options.keepSwAccel = rbSwAccel.isChecked();
+            options.hwActivityName = hwLauncherActivityName;
+            options.swActivityName = swLauncherActivityName;
         }
 
         options.embedScript = cbScript.isChecked();
@@ -888,7 +1408,18 @@ public class ModifierActivity extends AppCompatActivity {
             summary.append("• 修改图标: 是\n");
         }
         if (options.deleteEntry) {
-            summary.append("• 删除多余入口: 是\n");
+            summary.append("• 删除多余启动入口: 是\n");
+            if (options.keepHwAccel) {
+                summary.append("    保留: 硬件加速入口 (").append(options.hwActivityName).append(")\n");
+                if (options.swActivityName != null) {
+                    summary.append("    删除: 软件加速入口 (").append(options.swActivityName).append(")\n");
+                }
+            } else if (options.keepSwAccel) {
+                summary.append("    保留: 软件加速入口 (").append(options.swActivityName).append(")\n");
+                if (options.hwActivityName != null) {
+                    summary.append("    删除: 硬件加速入口 (").append(options.hwActivityName).append(")\n");
+                }
+            }
         }
         if (options.embedScript) {
             summary.append("• 内置脚本: 是\n");
@@ -1459,6 +1990,8 @@ public class ModifierActivity extends AppCompatActivity {
         public boolean deleteEntry;
         public boolean keepHwAccel;
         public boolean keepSwAccel;
+        public String hwActivityName; // HW 加速的启动入口 activity 名称
+        public String swActivityName; // SW 加速的启动入口 activity 名称
 
         public boolean embedScript;
         public String scriptPath;

@@ -401,9 +401,15 @@ public class ManifestModifier {
                         XMLEntry nextEntry = xmlEntries.get(k);
                         String nextTag = nextEntry.getTag().trim();
 
-                        if (nextTag.startsWith("<") && !nextTag.startsWith("</") && !nextTag.endsWith("/>")) {
-                            depth++;
-                        } else if (nextTag.startsWith("</") || nextTag.endsWith("/>")) {
+                        if (nextTag.startsWith("<") && !nextTag.startsWith("</")) {
+                            // 自闭合标签（mEndTag 含 "/>"）不增加深度
+                            String endTag = nextEntry.getEndTag();
+                            if (endTag != null && endTag.trim().startsWith("/>")) {
+                                // self-closing, depth unchanged
+                            } else {
+                                depth++;
+                            }
+                        } else if (nextTag.startsWith("</")) {
                             depth--;
                             if (depth == 0) {
                                 endIndex = k;
@@ -501,6 +507,119 @@ public class ManifestModifier {
      */
     public List<XMLEntry> getModifiedEntries() {
         return xmlEntries;
+    }
+
+    // ==================== 启动入口分析 ====================
+
+    /** 启动入口信息 */
+    public static class LauncherActivity {
+        public String activityName;   // android:name 值
+        public boolean hardwareAccelerated; // true=HW加速, false=SW加速
+    }
+
+    public static class LauncherEntryInfo {
+        public List<LauncherActivity> launcherActivities = new ArrayList<>();
+        public boolean hasMultipleEntries; // 是否有多个启动入口
+
+        /** 获取HW加速的启动入口 */
+        public LauncherActivity getHwEntry() {
+            for (LauncherActivity a : launcherActivities) {
+                if (a.hardwareAccelerated) return a;
+            }
+            return null;
+        }
+
+        /** 获取SW加速的启动入口 */
+        public LauncherActivity getSwEntry() {
+            for (LauncherActivity a : launcherActivities) {
+                if (!a.hardwareAccelerated) return a;
+            }
+            return null;
+        }
+    }
+
+    /** 分析启动入口：扫描所有包含 LAUNCHER intent-filter 的 Activity */
+    public LauncherEntryInfo analyzeLauncherEntries() {
+        LauncherEntryInfo info = new LauncherEntryInfo();
+
+        for (int i = 0; i < xmlEntries.size(); i++) {
+            XMLEntry entry = xmlEntries.get(i);
+            String tag = entry.getTag().trim();
+
+            if (tag.startsWith("<activity") || tag.equals("<activity")) {
+                // 获取 activity 的 name 和 hardwareAccelerated 属性
+                String activityName = null;
+                Boolean hwAccel = null;
+
+                for (int j = i + 1; j < xmlEntries.size(); j++) {
+                    XMLEntry attrEntry = xmlEntries.get(j);
+                    String attrTag = attrEntry.getTag().trim();
+
+                    if (attrTag.startsWith("<")) break; // 属性区域结束
+
+                    if ((attrTag.equals("android:name") || attrTag.endsWith("android:name"))
+                            && attrEntry.getMiddleTag().equals("=\"")) {
+                        activityName = attrEntry.getValue();
+                    }
+
+                    if ((attrTag.equals("android:hardwareAccelerated") || attrTag.endsWith("android:hardwareAccelerated"))
+                            && attrEntry.getMiddleTag().equals("=\"")) {
+                        hwAccel = "true".equalsIgnoreCase(attrEntry.getValue());
+                    }
+                }
+
+                if (activityName == null) continue;
+
+                // 查找此 activity 的结束位置
+                int endIndex = findActivityEndIndex(xmlEntries, i);
+                if (endIndex < 0) continue;
+
+                // 在 activity 范围内检查是否包含 LAUNCHER intent-filter
+                boolean hasLauncherFilter = false;
+                for (int k = i; k <= endIndex; k++) {
+                    XMLEntry e = xmlEntries.get(k);
+                    String val = e.getValue();
+                    if (val != null && val.equals("android.intent.category.LAUNCHER")
+                            && e.getMiddleTag().equals("=\"")) {
+                        hasLauncherFilter = true;
+                        break;
+                    }
+                }
+
+                if (hasLauncherFilter) {
+                    LauncherActivity la = new LauncherActivity();
+                    la.activityName = activityName;
+                    la.hardwareAccelerated = hwAccel != null ? hwAccel : false;
+                    info.launcherActivities.add(la);
+                }
+            }
+        }
+
+        info.hasMultipleEntries = info.launcherActivities.size() > 1;
+        return info;
+    }
+
+    /** 查找指定 activity 的开始位置至结束位置 */
+    public static int findActivityEndIndex(List<XMLEntry> entries, int startIndex) {
+        int depth = 1;
+        for (int k = startIndex + 1; k < entries.size(); k++) {
+            XMLEntry e = entries.get(k);
+            String tag = e.getTag().trim();
+
+            if (tag.startsWith("<") && !tag.startsWith("</")) {
+                // 自闭合标签（mEndTag 含 "/>"）不改变深度
+                String endTag = e.getEndTag();
+                if (endTag != null && endTag.trim().startsWith("/>")) {
+                    // self-closing, depth unchanged
+                } else {
+                    depth++;
+                }
+            } else if (tag.startsWith("</")) {
+                depth--;
+                if (depth == 0) return k;
+            }
+        }
+        return -1;
     }
 
     /**

@@ -255,6 +255,28 @@ public class ApkModifier {
             modifier.setApplicationLabel(mOptions.newAppName);
         }
 
+        // 处理删除多余启动入口
+        if (mOptions.deleteEntry) {
+            boolean removed = false;
+            if (mOptions.keepHwAccel && mOptions.swActivityName != null) {
+                android.util.Log.d("ApkModifier", "删除SW启动入口: " + mOptions.swActivityName);
+                modifier.removeActivity(mOptions.swActivityName);
+                removed = true;
+            } else if (mOptions.keepSwAccel && mOptions.hwActivityName != null) {
+                android.util.Log.d("ApkModifier", "删除HW启动入口: " + mOptions.hwActivityName);
+                modifier.removeActivity(mOptions.hwActivityName);
+                removed = true;
+            }
+            // 边缘情况：所有启动入口为同一类型时，移除已识别的那一个
+            if (!removed && mOptions.keepHwAccel && mOptions.hwActivityName != null) {
+                android.util.Log.d("ApkModifier", "删除多余HW启动入口: " + mOptions.hwActivityName);
+                modifier.removeActivity(mOptions.hwActivityName);
+            } else if (!removed && mOptions.keepSwAccel && mOptions.swActivityName != null) {
+                android.util.Log.d("ApkModifier", "删除多余SW启动入口: " + mOptions.swActivityName);
+                modifier.removeActivity(mOptions.swActivityName);
+            }
+        }
+
         List<XMLEntry> modifiedEntries = modifier.getModifiedEntries();
 
         aXMLEncoder encoder = new aXMLEncoder();
@@ -456,16 +478,17 @@ public class ApkModifier {
         }
 
         IconSize[] iconSizes = {
-                new IconSize("res/mipmap-mdpi/ic_launcher.png", 48),
-                new IconSize("res/mipmap-hdpi/ic_launcher.png", 72),
-                new IconSize("res/mipmap-xhdpi/ic_launcher.png", 96),
-                new IconSize("res/mipmap-xxhdpi/ic_launcher.png", 144),
-                new IconSize("res/mipmap-xxxhdpi/ic_launcher.png", 192),
-                new IconSize("res/drawable-mdpi/ic_launcher.png", 48),
-                new IconSize("res/drawable-hdpi/ic_launcher.png", 72),
-                new IconSize("res/drawable-xhdpi/ic_launcher.png", 96),
-                new IconSize("res/drawable-xxhdpi/ic_launcher.png", 144),
-                new IconSize("res/drawable-xxxhdpi/ic_launcher.png", 192),
+                new IconSize("res/mipmap-mdpi/ic_gg_48dp.png", 48),
+                new IconSize("res/mipmap-hdpi/ic_gg_48dp.png", 72),
+                new IconSize("res/mipmap-xhdpi/ic_gg_48dp.png", 96),
+                new IconSize("res/mipmap-xxhdpi/ic_gg_48dp.png", 144),
+                new IconSize("res/mipmap-xxxhdpi/ic_gg_48dp.png", 192),
+                new IconSize("res/drawable-mdpi/ic_gg_48dp.png", 48),
+                new IconSize("res/drawable/ic_gg_48dp.png", 48),
+                new IconSize("res/drawable-hdpi/ic_gg_48dp.png", 72),
+                new IconSize("res/drawable-xhdpi/ic_gg_48dp.png", 96),
+                new IconSize("res/drawable-xxhdpi/ic_gg_48dp.png", 144),
+                new IconSize("res/drawable-xxxhdpi/ic_gg_48dp.png", 192),
         };
 
         int modifiedCount = 0;

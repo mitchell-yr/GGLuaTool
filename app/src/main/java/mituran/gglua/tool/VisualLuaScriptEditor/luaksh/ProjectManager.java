@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,44 @@ import java.util.List;
  */
 public class ProjectManager {
     private static final String FILE_NAME = "code.json";
+    public static final String CURRENT_VERSION = "2.3";
+
+    /**
+     * 项目加载结果，包含解析状态和详细错误信息
+     */
+    public static class ProjectLoadResult {
+        public List<CodeTab> tabs;
+        public String errorType;       // "SUCCESS", "NO_FILE", "EMPTY_DATA", "PARSE_ERROR"
+        public String errorMessage;    // 简短错误描述
+        public String errorDetail;     // 详细错误信息（用于修复建议对话框）
+        public String rawContent;      // 原始JSON内容
+        public String fileVersion;     // 文件中记录的版本号
+
+        public boolean isSuccess() {
+            return "SUCCESS".equals(errorType) && tabs != null && !tabs.isEmpty();
+        }
+
+        /**
+         * 获取带行号的格式化内容，用于在修复对话框中展示
+         */
+        public String getFormattedContent() {
+            if (rawContent == null || rawContent.isEmpty()) return "(文件为空)";
+            StringBuilder sb = new StringBuilder();
+            String[] lines = rawContent.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                sb.append(String.format("%4d | %s\n", i + 1, lines[i]));
+            }
+            return sb.toString();
+        }
+
+        /**
+         * 获取版本差异描述
+         */
+        public String getVersionDiff() {
+            String fv = (fileVersion != null && !fileVersion.isEmpty()) ? fileVersion : "未知";
+            return "文件版本: " + fv + "\n当前编辑器版本: " + CURRENT_VERSION;
+        }
+    }
 
     public static boolean saveProject(String path, List<CodeTab> tabs) {
         try {
@@ -26,7 +66,7 @@ public class ProjectManager {
             File file = new File(path, FILE_NAME);
 
             JSONObject root = new JSONObject();
-            root.put("version", "2.3");
+            root.put("version", CURRENT_VERSION);
             root.put("timestamp", System.currentTimeMillis());
 
             JSONArray tabsArray = new JSONArray();
@@ -46,38 +86,94 @@ public class ProjectManager {
         }
     }
 
-    public static List<CodeTab> loadProject(String path) {
+    public static ProjectLoadResult loadProject(String path) {
+        ProjectLoadResult result = new ProjectLoadResult();
+
         try {
             File file = new File(path, FILE_NAME);
 
             if (!file.exists()) {
-                return null;
+                result.errorType = "NO_FILE";
+                result.errorMessage = "项目文件不存在";
+                return result;
             }
 
+            // 读取原始内容（保留换行，便于展示）
             StringBuilder content = new StringBuilder();
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
             while ((line = reader.readLine()) != null) {
-                content.append(line);
+                content.append(line).append("\n");
             }
             reader.close();
 
-            JSONObject root = new JSONObject(content.toString());
-            JSONArray tabsArray = root.getJSONArray("tabs");
+            String rawContent = content.toString();
+            result.rawContent = rawContent;
+
+            // 解析JSON
+            JSONObject root;
+            try {
+                root = new JSONObject(rawContent);
+            } catch (JSONException e) {
+                result.errorType = "PARSE_ERROR";
+                result.errorMessage = "JSON格式错误，无法解析项目文件";
+                result.errorDetail = e.getMessage();
+                return result;
+            }
+
+            // 读取版本号
+            result.fileVersion = root.optString("version", "未知");
+
+            // 解析tabs数组
+            JSONArray tabsArray;
+            try {
+                tabsArray = root.getJSONArray("tabs");
+            } catch (JSONException e) {
+                result.errorType = "PARSE_ERROR";
+                result.errorMessage = "缺少tabs数组或格式错误";
+                result.errorDetail = e.getMessage();
+                return result;
+            }
 
             List<CodeTab> tabs = new ArrayList<>();
             for (int i = 0; i < tabsArray.length(); i++) {
-                JSONObject tabJson = tabsArray.getJSONObject(i);
-                CodeTab tab = jsonToTab(tabJson);
-                if (tab != null) {
-                    tabs.add(tab);
+                try {
+                    JSONObject tabJson = tabsArray.getJSONObject(i);
+                    CodeTab tab = jsonToTab(tabJson);
+                    if (tab != null) {
+                        tabs.add(tab);
+                    }
+                } catch (JSONException e) {
+                    result.errorType = "PARSE_ERROR";
+                    result.errorMessage = "解析第" + (i + 1) + "个标签页时JSON出错";
+                    result.errorDetail = "标签页 #" + (i + 1) + ": " + e.getMessage();
+                    return result;
+                } catch (IllegalArgumentException e) {
+                    result.errorType = "PARSE_ERROR";
+                    result.errorMessage = "第" + (i + 1) + "个标签页包含无法识别的数据";
+                    result.errorDetail = "标签页 #" + (i + 1) + " 中存在无法识别的代码块类型或枚举值:\n" + e.getMessage();
+                    return result;
                 }
             }
 
-            return tabs.isEmpty() ? null : tabs;
+            if (tabs.isEmpty()) {
+                result.errorType = "EMPTY_DATA";
+                result.errorMessage = "项目数据为空（没有有效的标签页）";
+                return result;
+            }
+
+            result.tabs = tabs;
+            result.errorType = "SUCCESS";
+            return result;
+
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            result.errorType = "PARSE_ERROR";
+            result.errorMessage = "解析失败: " + e.getClass().getSimpleName();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            result.errorDetail = sw.toString();
+            return result;
         }
     }
 

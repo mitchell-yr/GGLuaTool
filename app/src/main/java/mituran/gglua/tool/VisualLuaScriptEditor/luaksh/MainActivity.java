@@ -64,13 +64,15 @@ public class MainActivity extends Activity {
 
     private void initData() {
         if (projectPath != null && ProjectManager.projectExists(projectPath)) {
-            tabs = ProjectManager.loadProject(projectPath);
-            if (tabs != null && !tabs.isEmpty()) {
+            ProjectManager.ProjectLoadResult result = ProjectManager.loadProject(projectPath);
+            if (result.isSuccess()) {
+                tabs = result.tabs;
                 currentTab = tabs.get(0);
                 Toast.makeText(this, "项目加载成功", Toast.LENGTH_SHORT).show();
             } else {
+                // 解析失败：先创建临时默认项目防止UI崩溃，然后弹出选择对话框
                 createDefaultProject();
-                Toast.makeText(this, "项目加载失败，已创建新项目", Toast.LENGTH_SHORT).show();
+                showParseErrorDialog(result);
             }
         } else {
             createDefaultProject();
@@ -643,6 +645,147 @@ public class MainActivity extends Activity {
         mainTab.addStartBlock(); // 添加主程序起始块
         tabs.add(mainTab);
         currentTab = mainTab;
+    }
+
+    /**
+     * 解析失败时显示三选对话框：覆盖、取消并退出、尝试修复
+     */
+    private void showParseErrorDialog(ProjectManager.ProjectLoadResult result) {
+        String message = "项目文件解析失败，请选择处理方式：\n\n"
+                + "错误原因: " + result.errorMessage;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("项目解析失败");
+        builder.setMessage(message);
+        builder.setCancelable(false); // 不允许点击外部取消
+
+        builder.setPositiveButton("覆盖", (dialog, which) -> {
+            // 保留已创建的默认项目并立即保存
+            if (projectPath != null) {
+                ProjectManager.saveProject(projectPath, tabs);
+            }
+            Toast.makeText(MainActivity.this, "已覆盖并创建新项目", Toast.LENGTH_SHORT).show();
+            refreshAdapters();
+        });
+
+        builder.setNegativeButton("取消并退出", (dialog, which) -> {
+            Toast.makeText(MainActivity.this, "已取消，项目未修改", Toast.LENGTH_SHORT).show();
+            finish();
+        });
+
+        builder.setNeutralButton("尝试修复", (dialog, which) -> {
+            showRepairDialog(result);
+        });
+
+        builder.show();
+    }
+
+    /**
+     * 显示修复建议对话框，包含解析失败的代码、版本差异和修复建议
+     */
+    private void showRepairDialog(ProjectManager.ProjectLoadResult result) {
+        // 构建修复建议内容
+        StringBuilder suggestions = new StringBuilder();
+        if ("PARSE_ERROR".equals(result.errorType)) {
+            String detail = result.errorDetail != null ? result.errorDetail : "";
+            if (detail.contains("JSON") || detail.contains("JSONException")) {
+                suggestions.append("修复建议:\n");
+                suggestions.append("1. 检查JSON格式是否正确，确保所有花括号 {} 和中括号 [] 匹配\n");
+                suggestions.append("2. 检查字符串值中的引号是否正确转义\n");
+                suggestions.append("3. 检查每个对象成员后是否有逗号分隔\n");
+                suggestions.append("4. 可使用在线JSON验证工具检查文件内容\n");
+            } else if (detail.contains("无法识别") || detail.contains("IllegalArgumentException")
+                    || detail.contains("valueOf") || detail.contains("enum") || detail.contains("CodeBlockType")) {
+                suggestions.append("修复建议:\n");
+                suggestions.append("1. 文件中包含无法识别的代码块类型名称\n");
+                suggestions.append("2. 可能是旧版本编辑器创建的项目，某些代码块类型已不再支持\n");
+                suggestions.append("3. 可以手动编辑 code.json，删除或修正无法识别的代码块类型\n");
+                suggestions.append("4. 检查 \"type\" 字段的值是否为有效的代码块类型\n");
+            } else {
+                suggestions.append("修复建议:\n");
+                suggestions.append("1. 备份当前的 code.json 文件后再尝试修复\n");
+                suggestions.append("2. 检查文件内容是否完整，可能文件已损坏\n");
+                suggestions.append("3. 如果项目由旧版本编辑器创建，尝试理解版本差异后手动修正\n");
+            }
+        } else if ("EMPTY_DATA".equals(result.errorType)) {
+            suggestions.append("修复建议:\n");
+            suggestions.append("1. 项目文件中没有有效的标签页数据\n");
+            suggestions.append("2. 可以手动添加 tabs 数组和代码块数据\n");
+            suggestions.append("3. 或直接选择'覆盖'创建新的空白项目\n");
+        } else {
+            suggestions.append("修复建议:\n");
+            suggestions.append("1. 备份当前的 code.json 文件\n");
+            suggestions.append("2. 尝试手动修复文件中的错误\n");
+            suggestions.append("3. 如果无法修复，请选择'覆盖'重新创建项目\n");
+        }
+
+        // 构建完整信息
+        StringBuilder info = new StringBuilder();
+        info.append("【错误信息】\n");
+        info.append(result.errorMessage != null ? result.errorMessage : "未知错误");
+        info.append("\n\n");
+
+        if (result.errorDetail != null && !result.errorDetail.isEmpty()) {
+            info.append("【错误详情】\n");
+            info.append(result.errorDetail);
+            info.append("\n\n");
+        }
+
+        info.append("【版本差异】\n");
+        info.append(result.getVersionDiff());
+        info.append("\n\n");
+
+        info.append("【").append(suggestions).append("】\n");
+
+        info.append("\n【解析失败的文件内容】\n");
+        // 限制显示长度，避免对话框过大
+        String formatted = result.getFormattedContent();
+        if (formatted.length() > 3000) {
+            formatted = formatted.substring(0, 3000) + "\n... (内容过长，已截断，完整内容请查看 code.json)";
+        }
+        info.append(formatted);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("修复建议");
+
+        // 使用ScrollView包裹内容
+        ScrollView scrollView = new ScrollView(this);
+        android.widget.TextView textView = new android.widget.TextView(this);
+        textView.setText(info.toString());
+        textView.setPadding(40, 40, 40, 40);
+        textView.setTextIsSelectable(true);
+        textView.setTextSize(13);
+        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        textView.setLineSpacing(4, 1);
+        scrollView.addView(textView);
+
+        builder.setView(scrollView);
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("覆盖", (dialog, which) -> {
+            if (projectPath != null) {
+                ProjectManager.saveProject(projectPath, tabs);
+            }
+            Toast.makeText(MainActivity.this, "已覆盖并创建新项目", Toast.LENGTH_SHORT).show();
+            refreshAdapters();
+        });
+
+        builder.setNegativeButton("取消并退出", (dialog, which) -> {
+            Toast.makeText(MainActivity.this, "已取消，项目未修改", Toast.LENGTH_SHORT).show();
+            finish();
+        });
+
+        builder.show();
+    }
+
+    /**
+     * 刷新适配器显示（覆盖后重新绑定数据）
+     */
+    private void refreshAdapters() {
+        tabAdapter.notifyDataSetChanged();
+        codeBlockAdapter.updateCodeBlocks(currentTab.getCodeBlocks());
+        codeBlockAdapter.notifyDataSetChanged();
+        codeBlockRecyclerView.recalculateWidth();
     }
 
     private void saveProject() {
