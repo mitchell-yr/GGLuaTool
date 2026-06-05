@@ -3,6 +3,8 @@ package mituran.gglua.tool;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
@@ -13,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,8 +35,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import mituran.gglua.tool.VisualLuaScriptEditor.luaksh.MainActivity;
 import mituran.gglua.tool.plugin.PluginManagerActivity;
@@ -95,17 +102,102 @@ public class ProjectFragment extends Fragment {
                 String name = project.getString("name");
                 String path = project.getString("path");
                 String type = project.optJSONObject("information").getString("type");
+                long lastModified = project.optJSONObject("information").optLong("lastModified", 0);
 
-                projectList.add(new ProjectItem(name, "项目类型：" +type,path,type));
+                projectList.add(new ProjectItem(name, "项目类型：" +type,path,type,lastModified));
 
 
             }
         } catch (JSONException e) {
-            projectList.add(new ProjectItem("损坏的项目", "项目文件损坏无法读取","",""));
+            projectList.add(new ProjectItem("损坏的项目", "项目文件损坏无法读取","","", 0));
             Log.e("TAG", "解析项目数据失败: " + e.getMessage());
         }
 
+        // 根据设置排序
+        applyPinStatus();
+        sortProjectList();
+
         filteredList.addAll(projectList);
+    }
+
+    /**
+     * 根据设置排序项目列表（置顶项目优先，然后按设置排序）
+     */
+    private void sortProjectList() {
+        SharedPreferences prefs = getContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+        String sortMode = prefs.getString("project_sort_mode", "name");
+
+        Comparator<ProjectItem> comparator;
+        if ("last_modified".equals(sortMode)) {
+            // 按最后修改时间降序（最近修改的在前）
+            comparator = (a, b) -> Long.compare(b.lastModified, a.lastModified);
+        } else {
+            // 按名称升序
+            comparator = (a, b) -> a.getTitle().compareToIgnoreCase(b.getTitle());
+        }
+
+        Collections.sort(projectList, (a, b) -> {
+            // 置顶项目排在最前
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            // 同为置顶或同为非置顶，按原排序规则
+            return comparator.compare(a, b);
+        });
+    }
+
+    /**
+     * 从 SharedPreferences 读取置顶项目路径，标记 projectList 中匹配的项目
+     */
+    private void applyPinStatus() {
+        Set<String> pinnedPaths = getPinnedPaths();
+        for (ProjectItem item : projectList) {
+            item.pinned = pinnedPaths.contains(item.getPath());
+        }
+    }
+
+    /**
+     * 获取置顶项目路径集合
+     */
+    private Set<String> getPinnedPaths() {
+        SharedPreferences prefs = getContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+        String json = prefs.getString("pinned_projects", null);
+        Set<String> paths = new HashSet<>();
+        if (json != null) {
+            try {
+                JSONArray arr = new JSONArray(json);
+                for (int i = 0; i < arr.length(); i++) {
+                    paths.add(arr.getString(i));
+                }
+            } catch (JSONException ignored) {}
+        }
+        return paths;
+    }
+
+    /**
+     * 保存置顶项目路径到 SharedPreferences
+     */
+    private void savePinnedPaths() {
+        JSONArray arr = new JSONArray();
+        for (ProjectItem item : projectList) {
+            if (item.pinned) {
+                arr.put(item.getPath());
+            }
+        }
+        getContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+                .edit().putString("pinned_projects", arr.toString()).apply();
+    }
+
+    /**
+     * 切换项目置顶状态
+     */
+    private void togglePinProject(ProjectItem item) {
+        item.pinned = !item.pinned;
+        savePinnedPaths();
+        sortProjectList();
+        filterProjects(searchEditText.getText().toString());
+        Toast.makeText(getContext(),
+                item.pinned ? "已置顶" : "已取消置顶",
+                Toast.LENGTH_SHORT).show();
     }
 
     private void setupListeners() {
@@ -162,9 +254,10 @@ public class ProjectFragment extends Fragment {
                                             JSONObject tempJson = new JSONObject();
                                             tempJson.put("version","");
                                             tempJson.put("type",type.getDisplayName());
+                                            tempJson.put("lastModified", System.currentTimeMillis());
                                             fos.write(tempJson.toString().getBytes());
                                             fos.close();
-                                            addProject(projectName,"项目类型：" + type.getDisplayName(),Environment.getExternalStorageDirectory().getAbsolutePath()+"/GGtool/project/"+projectName,type.getDisplayName());
+                                            addProject(projectName,"项目类型：" + type.getDisplayName(),Environment.getExternalStorageDirectory().getAbsolutePath()+"/GGtool/project/"+projectName,type.getDisplayName(), System.currentTimeMillis());
                                         } catch (JSONException e) {
                                             e.printStackTrace();
                                         }
@@ -310,7 +403,7 @@ public class ProjectFragment extends Fragment {
             copyDirectory(projectFolder, targetDir);
 
             // 添加到项目列表
-            addProject(finalProjectName, "项目类型：" + projectType, targetDir.getAbsolutePath(), projectType);
+            addProject(finalProjectName, "项目类型：" + projectType, targetDir.getAbsolutePath(), projectType, System.currentTimeMillis());
 
             // 清理临时文件
             tempZipFile.delete();
@@ -569,6 +662,12 @@ public class ProjectFragment extends Fragment {
         tvTitle.setText(item.getTitle());
         tvDescription.setText(item.getDescription());
 
+        // 显示/隐藏置顶徽章
+        ImageView ivPinBadge = cardView.findViewById(R.id.iv_pin_badge);
+        if (ivPinBadge != null) {
+            ivPinBadge.setVisibility(item.pinned ? View.VISIBLE : View.GONE);
+        }
+
         btnOperate.setOnClickListener(v -> {
             showManageDialog(item);
         });
@@ -606,11 +705,23 @@ public class ProjectFragment extends Fragment {
         LinearLayout renameOption = bottomSheetView.findViewById(R.id.option_rename);
         LinearLayout shareOption = bottomSheetView.findViewById(R.id.option_share);
         LinearLayout exportOption = bottomSheetView.findViewById(R.id.option_export);
+        LinearLayout pinOption = bottomSheetView.findViewById(R.id.option_pin);
+        TextView tvPinText = bottomSheetView.findViewById(R.id.tv_pin_text);
+        ImageView ivPinIcon = bottomSheetView.findViewById(R.id.iv_pin_icon);
         LinearLayout deleteOption = bottomSheetView.findViewById(R.id.option_delete);
         TextView projectTitle = bottomSheetView.findViewById(R.id.dialog_project_title);
 
         // 设置项目标题
         projectTitle.setText(item.getTitle());
+
+        // 根据置顶状态更新文字和图标
+        if (item.pinned) {
+            tvPinText.setText("取消置顶");
+            ivPinIcon.setColorFilter(Color.parseColor("#F44336"));
+        } else {
+            tvPinText.setText("置顶");
+            ivPinIcon.setColorFilter(Color.parseColor("#6200EE"));
+        }
 
         // 设置各选项的点击事件
         renameOption.setOnClickListener(v -> {
@@ -626,6 +737,11 @@ public class ProjectFragment extends Fragment {
         exportOption.setOnClickListener(v -> {
             bottomSheetDialog.dismiss();
             exportProject(item);
+        });
+
+        pinOption.setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            togglePinProject(item);
         });
 
         deleteOption.setOnClickListener(v -> {
@@ -849,16 +965,18 @@ public class ProjectFragment extends Fragment {
     private void deleteProject(ProjectItem item) {
         projectList.remove(item);
         filteredList.remove(item);
+        savePinnedPaths(); // 清理已删除项目的置顶记录
         displayCards();
         //Toast.makeText(getContext(), "项目已删除", Toast.LENGTH_SHORT).show();
     }
 
     // 添加新项目的方法
-    public void addProject(String title, String description,String path,String type) {
-        ProjectItem newItem = new ProjectItem(title, description,path,type);
+    public void addProject(String title, String description,String path,String type, long lastModified) {
+        ProjectItem newItem = new ProjectItem(title, description,path,type, lastModified);
         projectList.add(newItem);
         filteredList.add(newItem);
-        displayCards();
+        sortProjectList();
+        filterProjects(""); // 刷新显示
     }
 
     // 移除项目的方法
@@ -911,11 +1029,16 @@ public class ProjectFragment extends Fragment {
 
         private String path;
 
-        public ProjectItem(String title, String description,String path,String type) {
+        private long lastModified;
+        private boolean pinned;
+
+        public ProjectItem(String title, String description,String path,String type, long lastModified) {
             this.title = title;
             this.description = description;
             this.path = path;
             this.type = type;
+            this.lastModified = lastModified;
+            this.pinned = false;
         }
 
         public String getTitle() {
@@ -936,6 +1059,10 @@ public class ProjectFragment extends Fragment {
 
         public String getPath() {
             return path;
+        }
+
+        public long getLastModified() {
+            return lastModified;
         }
 
         public void setDescription(String description) {

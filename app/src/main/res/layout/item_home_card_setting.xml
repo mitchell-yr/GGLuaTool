@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="6dp">
+
+    <!-- 拖拽把手 -->
+    <ImageView
+        android:id="@+id/iv_drag_handle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_drag_handle" />
+
+    <!-- 卡片图标 -->
+    <ImageView
+        android:id="@+id/iv_card_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:padding="4dp"
+        android:layout_marginStart="4dp"
+        app:tint="#6200EE" />
+
+    <!-- 卡片名称 -->
+    <TextView
+        android:id="@+id/tv_card_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:textColor="#212121"
+        android:textSize="15sp" />
+
+    <!-- 开关 -->
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_card_visible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp" />
+
+</LinearLayout>

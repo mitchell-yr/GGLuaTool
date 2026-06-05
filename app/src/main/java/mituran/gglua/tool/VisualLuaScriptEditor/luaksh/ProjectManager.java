@@ -79,11 +79,39 @@ public class ProjectManager {
             writer.write(root.toString(2));
             writer.close();
 
+            // 更新 project_info.json 的 lastModified
+            updateLastModified(path);
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * 更新 project_info.json 中的 lastModified 字段
+     */
+    private static void updateLastModified(String projectPath) {
+        try {
+            File infoFile = new File(projectPath, "project_info.json");
+            if (infoFile.exists()) {
+                StringBuilder content = new StringBuilder();
+                BufferedReader reader = new BufferedReader(new FileReader(infoFile));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+                reader.close();
+
+                JSONObject json = new JSONObject(content.toString());
+                json.put("lastModified", System.currentTimeMillis());
+
+                FileWriter writer = new FileWriter(infoFile);
+                writer.write(json.toString());
+                writer.close();
+            }
+        } catch (Exception ignored) {}
     }
 
     public static ProjectLoadResult loadProject(String path) {

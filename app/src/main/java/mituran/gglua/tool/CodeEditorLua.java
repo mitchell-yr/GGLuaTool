@@ -996,6 +996,28 @@ public class CodeEditorLua extends AppCompatActivity {
 
     private void saveData(String textToWrite,String folderName,String fileName) {
         writeToFile( textToWrite, folderName, fileName);
+        updateProjectLastModified(folderName);
+    }
+
+    /**
+     * 更新 project_info.json 中的 lastModified 字段
+     */
+    private void updateProjectLastModified(String projectPath) {
+        try {
+            File infoFile = new File(projectPath, "project_info.json");
+            if (infoFile.exists()) {
+                String content = readFileFromExternalStorage(infoFile.getAbsolutePath());
+                if (content != null) {
+                    JSONObject json = new JSONObject(content);
+                    json.put("lastModified", System.currentTimeMillis());
+                    FileOutputStream fos = new FileOutputStream(infoFile);
+                    fos.write(json.toString().getBytes());
+                    fos.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e("CodeEditorLua", "更新lastModified失败", e);
+        }
     }
 
     public String readFileFromExternalStorage(String filePath) {

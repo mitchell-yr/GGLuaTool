@@ -248,7 +248,7 @@ public class ResourceDetailActivity extends AppCompatActivity {
         } else {
             // 尝试用资源ID从网络获取
             loadMarkdownFromNetwork(
-                    ApiConfig.RESOURCE_DETAIL + "?id=" + resourceItem.getId());
+                    ApiConfig.resourceDetailUrl(this) + "?id=" + resourceItem.getId());
         }
     }
 
@@ -334,7 +334,7 @@ public class ResourceDetailActivity extends AppCompatActivity {
      * 从网络获取完整详情（当只传ID时）
      */
     private void loadDetailFromNetwork(int resourceId) {
-        String url = ApiConfig.RESOURCE_DETAIL + "?id=" + resourceId;
+        String url = ApiConfig.resourceDetailUrl(this) + "?id=" + resourceId;
         HttpHelper.get(url, new HttpHelper.Callback() {
             @Override
             public void onSuccess(String response) {

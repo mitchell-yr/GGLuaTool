@@ -1050,8 +1050,9 @@ public class LuaEngine {
             // 处理 os.exit 调用，这是正常的脚本退出
             // 退出码已经在 overrideOsExit 中记录了
         } catch (LuaError e) {
-            // 捕获 Lua 运行时错误
-            //logToTextView("[lua虚拟机]Lua错误: " + e.getMessage() + "\n");
+            // 捕获 Lua 运行时错误，记录到日志并重新抛出
+            logToTextView("[lua虚拟机]Lua错误: " + e.getMessage() + "\n");
+            throw e;
         } catch (Exception e) {
             // 捕获其他 Java 异常
             logToTextView("[lua虚拟机]Java错误: " + e.getMessage() + "\n");

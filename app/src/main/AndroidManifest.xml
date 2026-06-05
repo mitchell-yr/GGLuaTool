@@ -127,6 +127,19 @@
             android:label="函数管理">
         </activity>
         <activity
+            android:name=".SettingsActivity"
+            android:label="设置"
+            android:theme="@style/Theme.悠然GG助手"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".LogDecompileActivity"
+            android:label="GG内置反编译与log"
+            android:theme="@style/Theme.悠然GG助手" />
+        <activity
             android:name=".communityFragment.ResourceDetailActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:windowSoftInputMode="adjustResize" />

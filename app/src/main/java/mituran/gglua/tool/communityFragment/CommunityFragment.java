@@ -223,7 +223,7 @@ public class CommunityFragment extends Fragment {
      * 从网络加载轮播图数据
      */
     private void loadBannerData() {
-        HttpHelper.get(ApiConfig.BANNER_LIST, new HttpHelper.Callback() {
+        HttpHelper.get(ApiConfig.bannerListUrl(getContext()), new HttpHelper.Callback() {
             @Override
             public void onSuccess(String response) {
                 try {
@@ -402,7 +402,7 @@ public class CommunityFragment extends Fragment {
         scriptEmpty.setVisibility(View.GONE);
         scriptRecyclerView.setVisibility(View.GONE);
 
-        HttpHelper.get(ApiConfig.SCRIPT_LIST, new HttpHelper.Callback() {
+        HttpHelper.get(ApiConfig.scriptListUrl(getContext()), new HttpHelper.Callback() {
             @Override
             public void onSuccess(String response) {
                 scriptLoading.setVisibility(View.GONE);
@@ -527,7 +527,7 @@ public class CommunityFragment extends Fragment {
         List<ResourceItem> builtInList = getBuiltInResources();
 
         // 2. 再请求网络资源
-        HttpHelper.get(ApiConfig.RESOURCE_LIST, new HttpHelper.Callback() {
+        HttpHelper.get(ApiConfig.resourceListUrl(getContext()), new HttpHelper.Callback() {
             @Override
             public void onSuccess(String response) {
                 resourceLoading.setVisibility(View.GONE);

@@ -1,5 +1,8 @@
 package mituran.gglua.tool.communityFragment;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 /**
  * ============================================================
  * 网络接口配置类 - 所有服务器地址和接口路径集中管理
@@ -8,24 +11,60 @@ package mituran.gglua.tool.communityFragment;
  */
 public class ApiConfig {
 
-    // ==================== 服务器基础地址 ====================
-    // 修改此处即可切换服务器
-    public static final String BASE_URL = "http://localhost:8080";
+    private static final String PREFS_NAME = "AppSettings";
+    private static final String KEY_SERVER_URL = "community_server_url";
 
-    // ==================== 轮播图接口 ====================
-    public static final String BANNER_LIST = BASE_URL + "/api/community/banners";
+    // 默认服务器地址
+    public static final String DEFAULT_BASE_URL = "http://localhost:8080";
 
-    // ==================== 脚本分享接口 ====================
-    public static final String SCRIPT_LIST = BASE_URL + "/api/community/scripts";
-
-    // ==================== 资源获取接口 ====================
-    public static final String RESOURCE_LIST = BASE_URL + "/api/community/resources";
-
-    // ==================== 资源详情接口 ====================
-    // 用法: RESOURCE_DETAIL + "?id=1" 或 RESOURCE_DETAIL + "/1"
-    public static final String RESOURCE_DETAIL = BASE_URL + "/api/community/resource/detail";
+    // ==================== 接口路径（常量） ====================
+    public static final String BANNER_LIST_PATH = "/api/community/banners";
+    public static final String SCRIPT_LIST_PATH = "/api/community/scripts";
+    public static final String RESOURCE_LIST_PATH = "/api/community/resources";
+    public static final String RESOURCE_DETAIL_PATH = "/api/community/resource/detail";
 
     // ==================== 超时设置(毫秒) ====================
     public static final int CONNECT_TIMEOUT = 10000;
     public static final int READ_TIMEOUT = 15000;
+
+    /**
+     * 从 SharedPreferences 读取用户设置的服务器地址
+     */
+    public static String getBaseUrl(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_SERVER_URL, DEFAULT_BASE_URL);
+    }
+
+    /**
+     * 保存用户设置的服务器地址
+     */
+    public static void setBaseUrl(Context context, String url) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        prefs.edit().putString(KEY_SERVER_URL, url).apply();
+    }
+
+    // ==================== 完整 URL（使用 getBaseUrl） ====================
+
+    /** 轮播图列表 URL */
+    public static String bannerListUrl(Context context) {
+        return getBaseUrl(context) + BANNER_LIST_PATH;
+    }
+
+    /** 脚本分享列表 URL */
+    public static String scriptListUrl(Context context) {
+        return getBaseUrl(context) + SCRIPT_LIST_PATH;
+    }
+
+    /** 资源列表 URL */
+    public static String resourceListUrl(Context context) {
+        return getBaseUrl(context) + RESOURCE_LIST_PATH;
+    }
+
+    /** 资源详情 URL */
+    public static String resourceDetailUrl(Context context) {
+        return getBaseUrl(context) + RESOURCE_DETAIL_PATH;
+    }
 }

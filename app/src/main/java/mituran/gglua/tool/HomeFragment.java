@@ -1,7 +1,9 @@
 package mituran.gglua.tool;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -31,6 +33,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -53,6 +58,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import mituran.gglua.tool.apktools.ModifierActivity;
 import mituran.gglua.tool.licenseModel.OpenSourceActivity;
@@ -70,6 +77,8 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
 
     // 卡片视图
     private CardView card2, card3, card4;
+    private LinearLayout homeCardsParent;
+    private SharedPreferences appPrefs;
 
     private Button btn_gg_apk_generate;
 
@@ -98,6 +107,8 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
+        appPrefs = getContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+
         // 初始化 Unluac
         unluacWrapper = new UnluacWrapper();
     }
@@ -116,6 +127,9 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         card2 = view.findViewById(R.id.card2);
         card3 = view.findViewById(R.id.card3);
         card4 = view.findViewById(R.id.card4);
+
+        // 卡片父容器（用于动态排序）
+        homeCardsParent = (LinearLayout) card2.getParent();
 
 
         //卡片2
@@ -163,8 +177,8 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         // GG修改器内置反编译按钮
         if (btn_gg_decompile != null) {
             btn_gg_decompile.setOnClickListener(v -> {
-                currentDecompilerType = DecompilerType.GG_MODIFIER;
-                Toast.makeText(getContext(), "GG修改器反编译功能开发中...", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), LogDecompileActivity.class);
+                startActivity(intent);
             });
         }
         //解密教程
@@ -210,11 +224,78 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     @Override
     public void onResume() {
         super.onResume();
+        refreshCardLayout();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    /**
+     * 根据设置动态刷新首页卡片的显隐和排列顺序
+     */
+    private void refreshCardLayout() {
+        if (homeCardsParent == null || appPrefs == null) return;
+
+        String orderJson = appPrefs.getString("home_cards_order", null);
+        String visibleJson = appPrefs.getString("home_cards_visible", null);
+
+        List<String> visibleIds = new ArrayList<>();
+        List<String> orderIds = new ArrayList<>();
+
+        if (visibleJson != null) {
+            try {
+                JSONArray arr = new JSONArray(visibleJson);
+                for (int i = 0; i < arr.length(); i++) {
+                    visibleIds.add(arr.getString(i));
+                }
+            } catch (JSONException e) {
+            // JSON format error, use defaults
+        }
+        }
+
+        if (orderJson != null) {
+            try {
+                JSONArray arr = new JSONArray(orderJson);
+                for (int i = 0; i < arr.length(); i++) {
+                    orderIds.add(arr.getString(i));
+                }
+            } catch (JSONException e) {
+            // JSON format error, use defaults
+        }
+        }
+
+        // 默认值
+        if (visibleIds.isEmpty()) {
+            visibleIds.add("card2");
+            visibleIds.add("card3");
+            visibleIds.add("card4");
+        }
+        if (orderIds.isEmpty()) {
+            orderIds.add("card2");
+            orderIds.add("card3");
+            orderIds.add("card4");
+        }
+
+        // 移除所有卡片后按配置顺序重新添加
+        homeCardsParent.removeAllViews();
+        for (String cardId : orderIds) {
+            CardView card = null;
+            switch (cardId) {
+                case "card2": card = card2; break;
+                case "card3": card = card3; break;
+                case "card4": card = card4; break;
+            }
+            if (card != null) {
+                if (visibleIds.contains(cardId)) {
+                    card.setVisibility(View.VISIBLE);
+                } else {
+                    card.setVisibility(View.GONE);
+                }
+                homeCardsParent.addView(card);
+            }
+        }
     }
 
     @Override
@@ -243,7 +324,8 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
         if (id == R.id.nav_home_donate) {
             // 处理捐赠
         } else if (id == R.id.nav_home_settings) {
-            // 处理设置
+            Intent intent = new Intent(getContext(), SettingsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_home_update) {
             // 处理更新
         } else if (id == R.id.nav_home_openAddress) {
