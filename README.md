@@ -64,7 +64,6 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 | minSdk                      | 28 (Android 9) |
 | targetSdk                   | 35             |
 
-
 ## 模块说明
 
 | 模块                    | 路径                       | 用途                            |
