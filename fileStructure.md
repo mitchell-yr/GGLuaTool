@@ -18,6 +18,7 @@ app/src/main/
 │   │   │   ├── FunctionManagerActivity.java # 函数管理器界面
 │   │   │   ├── GgFunctionAdder.java      # GG函数添加器
 │   │   │   ├── ManifestModifier.java     # AndroidManifest修改
+│   │   │   ├── ModifyPreset.java          # 修改预设配置
 │   │   │   └── ScriptEmbedder.java       # 脚本嵌入
 │   │   ├── communityFragment/           # community分页
 │   │   │   ├── CommunityFragment.java      # 主Fragment
@@ -78,15 +79,18 @@ app/src/main/
 │   │   │       ├── DynamicCodeBlockType.java       # 动态代码块类型
 │   │   │       ├── ExpandableBlockTypeAdapter.java # 可展开代码块类型适配器
 │   │   │       ├── FixedWidthRecyclerView.java     # 固定宽度RecyclerView
+│   │   │       ├── GeneratedLuaCode.java           # 生成Lua代码管理（封装生成的Lua代码及其行号到代码块的映射关系）
 │   │   │       ├── ProjectManager.java             # 项目管理
 │   │   │       └── TabAdapter.java                 # 标签页适配器
 │   │   ├── BuildOutputLogManager.java   # 构建输出日志管理器（用于lua脚本编译）
 │   │   ├── CodeEditorLua.java           # Lua代码编辑器
 │   │   ├── DraggableScrollBar.java      # 可拖动滚动条组件（用于tutorial内各个独立的md查看器）
 │   │   ├── EncryptionOptionsDialog.java # lua脚本加密选项对话框（在代码编辑器内点击编译后用于选择启用哪些加密）
+│   │   ├── FilePreviewActivity.java     # 文件预览Activity（用于GG自带log和反编译所产生文件）
 │   │   ├── HomeFragment.java            # 主页页面
 │   │   ├── LuaCheckResultDialog.java    # Lua语法检查结果对话框（脚本编辑器内）
 │   │   ├── LuaCompiler.java             # Lua编译器（在脚本编辑器内点编译后）
+│   │   ├── LogDecompileActivity.java    # 构建日志反编译Activity
 │   │   ├── LuaEncryptionModule.java     # Lua脚本加密模块，内定义了部分加密的方法，其他加密方法在luaTool里调用
 │   │   ├── LuaEngine.java               # Lua引擎，内部定义了添加的GG函数
 │   │   ├── LuaExecutorActivity.java     # Lua执行器Activity（用于主页"脚本解密"card内的"Lua虚拟机"）
@@ -95,7 +99,8 @@ app/src/main/
 │   │   ├── MainActivity.java            # 主Activity，软件入口
 │   │   ├── MarkdownViewerActivity.java  # Markdown查看器（用于插件文档显示）
 │   │   ├── ProjectFragment.java         # 项目页面
-│   │   └── ProjectTypeDialog.java       # 选择项目类型对话框（在新建项目时弹出）
+│   │   ├── ProjectTypeDialog.java       # 选择项目类型对话框（在新建项目时弹出）
+│   │   └── SettingsActivity.java        # 主页设置Activity
 │   ├── unluac/                          # Unluac反编译工具
 │   └── zhao/arsceditor/                 # resource.ARSC修改工具
 ├── res/                                 # Android资源目录
