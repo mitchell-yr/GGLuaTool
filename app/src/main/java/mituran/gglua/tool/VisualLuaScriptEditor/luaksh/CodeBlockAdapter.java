@@ -22,10 +22,19 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
     private Context context;
     private List<CodeBlock> codeBlocks;
     private OnCodeBlockClickListener listener;
+    private OnContentChangedListener contentChangedListener;
 
     public interface OnCodeBlockClickListener {
         void onBlockClick(int position);
         void onBlockLongClick(int position);
+    }
+
+    public interface OnContentChangedListener {
+        void onContentChanged(int position);
+    }
+
+    public void setOnContentChangedListener(OnContentChangedListener listener) {
+        this.contentChangedListener = listener;
     }
 
     public CodeBlockAdapter(Context context, List<CodeBlock> codeBlocks, OnCodeBlockClickListener listener) {
@@ -202,6 +211,9 @@ public class CodeBlockAdapter extends RecyclerView.Adapter<CodeBlockAdapter.View
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 part.value = s.toString();
+                if (contentChangedListener != null) {
+                    contentChangedListener.onContentChanged(blockPosition);
+                }
             }
 
             @Override

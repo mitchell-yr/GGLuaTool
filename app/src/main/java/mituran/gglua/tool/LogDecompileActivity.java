@@ -3,20 +3,15 @@ package mituran.gglua.tool;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.FileProvider;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,21 +19,22 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 
 public class LogDecompileActivity extends AppCompatActivity {
 
     private static final String NOTES_PATH = "/sdcard/Notes";
-    private static final int ANTI_LOG_SIZE_THRESHOLD = 100 * 1024; // 100KB
+    private static final int ANTI_LOG_SIZE_THRESHOLD = 2 * 1024; // 2KB 以上即检测
     private static final float ANTI_LOG_DUPLICATE_RATIO = 0.5f;    // 50% 重复率
     private static final int ANTI_LOG_SAMPLE_LINES = 500;
 
     private LinearLayout llLogList, llLasmList;
     private TextView tvLogCount, tvLasmCount;
     private TextView tvLogEmpty, tvLasmEmpty;
+    private List<String> currentAntiLogPatterns;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,11 +154,13 @@ public class LogDecompileActivity extends AppCompatActivity {
     }
 
     private void onFileClick(File file, boolean isLog) {
+        currentAntiLogPatterns = null;
         // 检查反log防御
         if (isLog) {
             try {
-                if (detectAntiLogDefense(file)) {
-                    showAntiLogDialog(file.getName());
+                currentAntiLogPatterns = detectAntiLogDefense(file);
+                if (currentAntiLogPatterns != null && !currentAntiLogPatterns.isEmpty()) {
+                    showAntiLogDialog(file);
                     return;
                 }
             } catch (Exception e) {
@@ -175,15 +173,16 @@ public class LogDecompileActivity extends AppCompatActivity {
 
     /**
      * 检测反log防御：文件较大 + 大量重复内容
+     * @return 高频重复模式列表，null表示未检测到反log防御
      */
-    private boolean detectAntiLogDefense(File file) throws Exception {
+    private List<String> detectAntiLogDefense(File file) throws Exception {
         long fileSize = file.length();
         if (fileSize < ANTI_LOG_SIZE_THRESHOLD) {
-            return false;
+            return null;
         }
 
-        // 读取前N行检测重复率
-        Set<String> uniqueLines = new HashSet<>();
+        // 读取前N行，统计每行出现频次
+        Map<String, Integer> lineCount = new LinkedHashMap<>();
         int totalLines = 0;
         int lineLimit = ANTI_LOG_SAMPLE_LINES;
 
@@ -192,10 +191,9 @@ public class LogDecompileActivity extends AppCompatActivity {
         try {
             String line;
             while ((line = reader.readLine()) != null && totalLines < lineLimit) {
-                // 跳过空白行
                 String trimmed = line.trim();
                 if (!trimmed.isEmpty()) {
-                    uniqueLines.add(trimmed);
+                    lineCount.merge(trimmed, 1, Integer::sum);
                 }
                 totalLines++;
             }
@@ -203,92 +201,43 @@ public class LogDecompileActivity extends AppCompatActivity {
             reader.close();
         }
 
-        if (totalLines == 0) return false;
+        if (totalLines == 0) return null;
 
-        // 实际非空行数
-        int nonEmptyLines = Math.max(uniqueLines.size(), 1);
-        float duplicateRatio = 1.0f - ((float) uniqueLines.size() / (float) totalLines);
+        int uniqueCount = lineCount.size();
+        float duplicateRatio = 1.0f - ((float) uniqueCount / (float) totalLines);
 
-        return duplicateRatio > ANTI_LOG_DUPLICATE_RATIO;
+        if (duplicateRatio > ANTI_LOG_DUPLICATE_RATIO) {
+            // 提取出现次数 >= 3 的高频模式
+            List<String> patterns = new ArrayList<>();
+            for (Map.Entry<String, Integer> entry : lineCount.entrySet()) {
+                if (entry.getValue() >= 3) {
+                    patterns.add(entry.getKey());
+                }
+            }
+            return patterns;
+        }
+        return null;
     }
 
-    private void showAntiLogDialog(String fileName) {
+    private void showAntiLogDialog(File file) {
         new AlertDialog.Builder(this)
                 .setTitle("检测到反log防御")
-                .setMessage("文件 \"" + fileName + "\" 中检测到大量重复日志内容。\n\n"
-                        + "该脚本加装了反log防御，日志系统已被崩掉，建议关闭log输出后重试。")
-                .setPositiveButton("仍然打开", (dialog, which) -> {
-                    File file = new File(NOTES_PATH, fileName);
-                    openFile(file);
-                })
+                .setMessage("文件 \"" + file.getName() + "\" 中检测到大量重复日志内容。\n\n"
+                        + "该脚本加装了反log防御，日志系统已被崩掉，建议关闭log输出后重试。\n\n"
+                        + "选择\"仍然打开\"将在预览中自动折叠重复内容。")
+                .setPositiveButton("仍然打开", (dialog, which) -> openFile(file))
                 .setNegativeButton("取消", null)
                 .show();
     }
 
     private void openFile(File file) {
-        try {
-            Uri uri;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                uri = FileProvider.getUriForFile(this,
-                        getPackageName() + ".fileprovider", file);
-            } else {
-                uri = Uri.fromFile(file);
-            }
-
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "text/plain");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            // 检查是否有应用能打开
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            } else {
-                // 没有外部应用能打开时，显示内容
-                showFileContentDialog(file);
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "无法打开文件: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, FilePreviewActivity.class);
+        intent.putExtra("file_path", file.getAbsolutePath());
+        if (currentAntiLogPatterns != null && !currentAntiLogPatterns.isEmpty()) {
+            intent.putStringArrayListExtra("anti_log_patterns",
+                    new ArrayList<>(currentAntiLogPatterns));
         }
-    }
-
-    private void showFileContentDialog(File file) {
-        try {
-            long fileSize = file.length();
-            // 文件太大则在弹窗中截断显示
-            boolean truncated = fileSize > 50 * 1024; // 50KB
-
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(file), "UTF-8"));
-            StringBuilder content = new StringBuilder();
-            String line;
-            int lineCount = 0;
-            int maxLines = truncated ? 200 : Integer.MAX_VALUE;
-
-            while ((line = reader.readLine()) != null && lineCount < maxLines) {
-                content.append(line).append("\n");
-                lineCount++;
-            }
-            boolean hasMore = reader.readLine() != null;
-            reader.close();
-
-            if (truncated && hasMore) {
-                content.append("\n\n... (内容过长，已截断，请使用外部编辑器打开完整文件)");
-            }
-
-            TextView textView = new TextView(this);
-            textView.setText(content.toString());
-            textView.setTextSize(12);
-            textView.setPadding(24, 16, 24, 16);
-            textView.setTextIsSelectable(true);
-
-            new AlertDialog.Builder(this)
-                    .setTitle(file.getName())
-                    .setView(textView)
-                    .setPositiveButton("关闭", null)
-                    .show();
-        } catch (Exception e) {
-            Toast.makeText(this, "读取文件失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        startActivity(intent);
     }
 
     private void showTutorialDialog() {

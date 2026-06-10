@@ -40,6 +40,10 @@ public class MainActivity extends Activity {
     private String projectPath;
     private boolean hasUnsavedChanges = false;
 
+    // 运行错误定位
+    private int errorTabIndex = -1;
+    private int errorBlockIndex = -1;
+
     // 自动保存相关
     private boolean autoSaveEnabled = false;
     private int autoSaveIntervalSec = 60;
@@ -221,6 +225,7 @@ public class MainActivity extends Activity {
                         showBlockActionDialog(position);
                     }
                 });
+        codeBlockAdapter.setOnContentChangedListener(position -> markAsChanged());
         codeBlockRecyclerView.setAdapter(codeBlockAdapter);
     }
 
@@ -892,13 +897,18 @@ public class MainActivity extends Activity {
             saveProjectSilently();
         }
 
-        // 生成 Lua 代码
-        String luaCode = generateLuaCode();
+        // 生成 Lua 代码（含行号映射）
+        final GeneratedLuaCode generatedCode = generateLuaCode();
+        String luaCode = generatedCode.getCode();
 
         if (luaCode == null || luaCode.trim().isEmpty()) {
             Toast.makeText(this, "脚本内容为空", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // 重置错误定位
+        errorTabIndex = -1;
+        errorBlockIndex = -1;
 
         // 每次执行时创建新的日志TextView，避免重复addView导致的崩溃
         final TextView logView = new TextView(this);
@@ -926,11 +936,21 @@ public class MainActivity extends Activity {
         builder.setNegativeButton("查看代码", null);
 
         AlertDialog dialog = builder.create();
+
+        // 对话框关闭后自动定位到出错代码块
+        dialog.setOnDismissListener(d -> {
+            if (errorTabIndex >= 0 && errorBlockIndex >= 0) {
+                scrollToErrorBlock();
+            }
+        });
+
         dialog.show();
 
         // 设置停止按钮
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             engine.close();
+            errorTabIndex = -1;
+            errorBlockIndex = -1;
             dialog.dismiss();
             Toast.makeText(this, "已停止", Toast.LENGTH_SHORT).show();
         });
@@ -949,6 +969,8 @@ public class MainActivity extends Activity {
 
                 long elapsed = System.currentTimeMillis() - startTime;
                 runOnUiThread(() -> {
+                    errorTabIndex = -1;
+                    errorBlockIndex = -1;
                     dialog.setTitle("执行完成");
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
@@ -958,13 +980,62 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     dialog.setTitle("执行异常");
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭并定位");
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
                     logView.append("[错误] " + e.getMessage() + "\n");
-                    Toast.makeText(this, "脚本执行异常: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+                    // 解析错误行号并定位代码块
+                    int errorLine = GeneratedLuaCode.parseErrorLine(e.getMessage());
+                    if (errorLine > 0) {
+                        int[] lineInfo = generatedCode.getLineInfo(errorLine);
+                        if (lineInfo != null && lineInfo[1] >= 0) {
+                            errorTabIndex = lineInfo[0];
+                            errorBlockIndex = lineInfo[1];
+                            CodeTab errorTab = tabs.get(errorTabIndex);
+                            CodeBlock errorBlock = errorTab.getCodeBlocks().get(errorBlockIndex);
+                            String blockName = errorBlock.getType().getDisplayName();
+                            logView.append("[错误定位] 第" + errorLine + "行 → "
+                                    + (errorTab.getType() == CodeTab.TabType.FUNCTION ? "函数\"" : "标签页\"")
+                                    + errorTab.getName() + "\" → \"" + blockName + "\"块\n");
+                        } else if (lineInfo != null && lineInfo[1] == -1) {
+                            logView.append("[错误定位] 第" + errorLine + "行 → 标签页\""
+                                    + tabs.get(lineInfo[0]).getName() + "\" (非块级代码，请检查函数定义或结构)\n");
+                        } else {
+                            logView.append("[错误定位] 第" + errorLine + "行，未能定位到对应代码块\n");
+                        }
+                    }
+
+                    Toast.makeText(this, "脚本执行异常，关闭后将定位到出错代码块", Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
+    }
+
+    /**
+     * 滚动到出错代码块并切换标签页
+     */
+    private void scrollToErrorBlock() {
+        if (errorTabIndex < 0 || errorBlockIndex < 0) return;
+        if (errorTabIndex >= tabs.size()) return;
+
+        CodeTab targetTab = tabs.get(errorTabIndex);
+        boolean savedUnsavedState = hasUnsavedChanges;
+
+        // 切换到对应标签页
+        if (currentTab != targetTab) {
+            int tabPosition = errorTabIndex;
+            switchToTab(tabPosition);
+            tabAdapter.setSelectedPosition(tabPosition);
+            tabRecyclerView.smoothScrollToPosition(tabPosition);
+        }
+
+        // 滚动到对应代码块
+        codeBlockRecyclerView.postDelayed(() -> {
+            codeBlockRecyclerView.smoothScrollToPosition(errorBlockIndex);
+            hasUnsavedChanges = savedUnsavedState;
+            errorTabIndex = -1;
+            errorBlockIndex = -1;
+        }, 300);
     }
 
     /**
@@ -989,7 +1060,7 @@ public class MainActivity extends Activity {
     }
 
     private void exportCode() {
-        String luaCode = generateLuaCode();
+        String luaCode = generateLuaCode().getCode();
         Toast.makeText(this, "代码已复制到剪贴板", Toast.LENGTH_SHORT).show();
 
         android.content.ClipboardManager clipboard =
@@ -998,14 +1069,19 @@ public class MainActivity extends Activity {
         clipboard.setPrimaryClip(clip);
     }
 
-    private String generateLuaCode() {
+    private GeneratedLuaCode generateLuaCode() {
+        GeneratedLuaCode result = new GeneratedLuaCode();
         StringBuilder sb = new StringBuilder();
 
-        for (CodeTab tab : tabs) {
+        // 函数标签页
+        for (int tabIdx = 0; tabIdx < tabs.size(); tabIdx++) {
+            CodeTab tab = tabs.get(tabIdx);
             if (tab.getType() == CodeTab.TabType.FUNCTION && !tab.getCodeBlocks().isEmpty()) {
                 sb.append(tab.generateFunctionHeader()).append("\n");
+                result.addLine(tabIdx, -1); // 函数头行
 
-                for (CodeBlock block : tab.getCodeBlocks()) {
+                for (int blockIdx = 0; blockIdx < tab.getCodeBlocks().size(); blockIdx++) {
+                    CodeBlock block = tab.getCodeBlocks().get(blockIdx);
                     if (block.getType().isSpecialStartBlock()) {
                         continue;
                     }
@@ -1016,16 +1092,23 @@ public class MainActivity extends Activity {
                             sb.append("    ");
                         }
                         sb.append(code).append("\n");
+                        result.addLine(tabIdx, blockIdx); // 块级行
                     }
                 }
 
                 sb.append("end\n\n");
+                result.addLine(tabIdx, -1); // end 行
+                result.addLine(tabIdx, -1); // 空行
             }
         }
 
+        // 主程序标签页
         CodeTab mainTab = tabs.get(0);
         sb.append("-- 主程序\n");
-        for (CodeBlock block : mainTab.getCodeBlocks()) {
+        result.addLine(0, -1); // 注释行
+
+        for (int blockIdx = 0; blockIdx < mainTab.getCodeBlocks().size(); blockIdx++) {
+            CodeBlock block = mainTab.getCodeBlocks().get(blockIdx);
             if (block.getType().isSpecialStartBlock()) {
                 continue;
             }
@@ -1036,10 +1119,12 @@ public class MainActivity extends Activity {
                     sb.append("    ");
                 }
                 sb.append(code).append("\n");
+                result.addLine(0, blockIdx); // 块级行
             }
         }
 
-        return sb.toString();
+        result.setCode(sb.toString());
+        return result;
     }
 
     // ==================== 项目管理 ====================
@@ -1205,6 +1290,29 @@ public class MainActivity extends Activity {
 
     private void markAsChanged() {
         hasUnsavedChanges = true;
+    }
+
+    // ==================== 退出提醒 ====================
+
+    @Override
+    public void onBackPressed() {
+        if (hasUnsavedChanges) {
+            new AlertDialog.Builder(this)
+                    .setTitle("未保存的更改")
+                    .setMessage("当前项目有未保存的更改，是否保存后退出？")
+                    .setPositiveButton("保存并退出", (dialog, which) -> {
+                        saveProject();
+                        finish();
+                    })
+                    .setNegativeButton("不保存", (dialog, which) -> {
+                        hasUnsavedChanges = false;
+                        finish();
+                    })
+                    .setNeutralButton("取消", null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     // ==================== 生命周期 ====================

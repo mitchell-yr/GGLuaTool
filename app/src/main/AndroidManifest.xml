@@ -140,6 +140,11 @@
             android:label="GG内置反编译与log"
             android:theme="@style/Theme.悠然GG助手" />
         <activity
+            android:name=".FilePreviewActivity"
+            android:label="文件预览"
+            android:theme="@style/Theme.悠然GG助手"
+            android:parentActivityName=".LogDecompileActivity" />
+        <activity
             android:name=".communityFragment.ResourceDetailActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
