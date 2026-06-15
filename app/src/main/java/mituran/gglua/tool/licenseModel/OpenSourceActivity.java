@@ -34,10 +34,10 @@ public class OpenSourceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 设置沉浸式状态栏
-        setStatusBarTransparent();
-
         setContentView(R.layout.activity_open_source_license);
+
+        // 设置沉浸式状态栏（必须在 setContentView 之后调用）
+        setStatusBarTransparent();
 
         initViews();
         initData();

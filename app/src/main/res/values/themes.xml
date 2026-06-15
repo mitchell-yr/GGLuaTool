@@ -11,6 +11,8 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Ensure edge-to-edge compatibility on Android 15+ -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>
