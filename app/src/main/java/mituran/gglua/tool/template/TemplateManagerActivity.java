@@ -195,6 +195,7 @@ public class TemplateManagerActivity extends AppCompatActivity {
         popup.show();
     }
 
+    @SuppressWarnings("deprecation")
     private void importTemplate() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/json");
@@ -202,12 +203,14 @@ public class TemplateManagerActivity extends AppCompatActivity {
     }
 
     // 更新创建新模板方法
+    @SuppressWarnings("deprecation")
     private void createNewTemplate() {
         Intent intent = new Intent(this, TemplateEditorActivity.class);
         startActivityForResult(intent, 2001);
     }
 
     // 添加编辑模板方法（在Adapter中调用）
+    @SuppressWarnings("deprecation")
     public void editTemplate(Template template) {
         Intent intent = new Intent(this, TemplateEditorActivity.class);
         intent.putExtra("template_name", template.name);
@@ -217,6 +220,7 @@ public class TemplateManagerActivity extends AppCompatActivity {
     }
 
     // 处理返回结果
+    @SuppressWarnings("deprecation")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

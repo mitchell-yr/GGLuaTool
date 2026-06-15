@@ -293,6 +293,7 @@ public class ProjectFragment extends Fragment {
     }
 
     //导入项目
+    @SuppressWarnings("deprecation")
     private void importProject() {
         // 启动文件选择器选择zip文件
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -300,6 +301,7 @@ public class ProjectFragment extends Fragment {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
         try {
+            // noinspection deprecation
             startActivityForResult(Intent.createChooser(intent, "选择项目zip文件"), REQUEST_CODE_IMPORT_PROJECT);
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(getContext(), "请安装文件管理器", Toast.LENGTH_SHORT).show();
@@ -309,6 +311,7 @@ public class ProjectFragment extends Fragment {
     // 添加常量定义
     private static final int REQUEST_CODE_IMPORT_PROJECT = 1001;
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

@@ -44,6 +44,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.MenuProvider;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -105,8 +106,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-
         appPrefs = getContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
 
         // 初始化 Unluac
@@ -146,6 +145,27 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
 
         // 设置导航视图监听器
         navigationView.setNavigationItemSelectedListener(this);
+
+        // 使用 MenuProvider 替代已过时的 onCreateOptionsMenu/onOptionsItemSelected
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.home_toolbar_menu, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                if (menuItem.getItemId() == R.id.action_more) {
+                    if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                        drawerLayout.closeDrawer(GravityCompat.END);
+                    } else {
+                        drawerLayout.openDrawer(GravityCompat.END);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner(), androidx.lifecycle.Lifecycle.State.RESUMED);
 
         // 设置卡片点击事件
         setupCardClickListeners();
@@ -296,25 +316,6 @@ public class HomeFragment extends Fragment implements NavigationView.OnNavigatio
                 homeCardsParent.addView(card);
             }
         }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.home_toolbar_menu, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_more) {
-            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                drawerLayout.closeDrawer(GravityCompat.END);
-            } else {
-                drawerLayout.openDrawer(GravityCompat.END);
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

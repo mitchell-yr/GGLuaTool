@@ -847,6 +847,7 @@ public class GGTutorialActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(navigationView)) {
@@ -854,7 +855,7 @@ public class GGTutorialActivity extends AppCompatActivity {
         } else if (searchBar.getVisibility() == View.VISIBLE) {
             hideSearchBar();
         } else {
-            super.onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
         }
     }
 }

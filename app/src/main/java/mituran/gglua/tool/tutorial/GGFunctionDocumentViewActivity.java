@@ -1762,6 +1762,7 @@ gg.toast('This is toast', true)
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(navigationView)) {
@@ -1769,7 +1770,7 @@ gg.toast('This is toast', true)
         } else if (searchBar.getVisibility() == View.VISIBLE) {
             hideSearchBar();
         } else {
-            super.onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
         }
     }
 }

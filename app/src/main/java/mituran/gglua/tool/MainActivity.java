@@ -287,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 新增：引导用户去设置页面
+    @SuppressWarnings("deprecation")
     private void showGoToSettingsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("需要存储权限");
@@ -313,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // 显示管理存储权限对话框（Android 11及以上）
+    @SuppressWarnings("deprecation")
     private void showManageStoragePermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("存储权限申请");
@@ -366,6 +368,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Activity结果回调（Android 11及以上）
+    @SuppressWarnings("deprecation")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -450,6 +453,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         // 先检查当前Fragment是否处理了返回键

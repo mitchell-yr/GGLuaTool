@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.WindowInsets;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,14 +44,18 @@ public class OpenSourceActivity extends AppCompatActivity {
         initRecyclerView();
     }
 
+    @SuppressWarnings("deprecation")
     private void setStatusBarTransparent() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Window window = getWindow();
-            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        // Use WindowInsetsController for modern status bar control
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setStatusBarColor(Color.TRANSPARENT);
-            window.getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            window.getInsetsController().show(WindowInsets.Type.statusBars());
+        } else {
+            @SuppressWarnings("deprecation")
+            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+            window.getDecorView().setSystemUiVisibility(flags);
         }
     }
 
@@ -60,7 +65,7 @@ public class OpenSourceActivity extends AppCompatActivity {
         tvTitle = findViewById(R.id.tv_title);
         tvSubtitle = findViewById(R.id.tv_subtitle);
 
-        ivBack.setOnClickListener(v -> onBackPressed());
+        ivBack.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
     }
 
     private void initData() {

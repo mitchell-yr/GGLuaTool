@@ -296,6 +296,7 @@ public class APKParser {
         return hash;
     }
 
+    @SuppressWarnings("deprecation")
     private static X509Certificate[] getX509Certificates(File apkFile, Context context) throws CertificateException {
         X509Certificate[] certs;
         CertificateFactory certificateFactory;
@@ -303,14 +304,28 @@ public class APKParser {
 
         PackageInfo packageInfo = null;
         if (apkFile != null && apkFile.exists()) {
-            packageInfo = context.getPackageManager().getPackageArchiveInfo(apkFile.getAbsolutePath(), PackageManager.GET_SIGNATURES);
+            packageInfo = context.getPackageManager().getPackageArchiveInfo(apkFile.getAbsolutePath(), PackageManager.GET_SIGNING_CERTIFICATES);
         }
         if (packageInfo != null) {
-            certs = new X509Certificate[packageInfo.signatures.length];
-            for (int i = 0; i < certs.length; i++) {
-                byte[] cert = packageInfo.signatures[i].toByteArray();
-                InputStream inStream = new ByteArrayInputStream(cert);
-                certs[i] = (X509Certificate) certificateFactory.generateCertificate(inStream);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                android.content.pm.SigningInfo signingInfo = packageInfo.signingInfo;
+                if (signingInfo != null) {
+                    certs = new X509Certificate[signingInfo.getApkContentsSigners().length];
+                    for (int i = 0; i < certs.length; i++) {
+                        byte[] cert = signingInfo.getApkContentsSigners()[i].toByteArray();
+                        InputStream inStream = new ByteArrayInputStream(cert);
+                        certs[i] = (X509Certificate) certificateFactory.generateCertificate(inStream);
+                    }
+                } else {
+                    certs = null;
+                }
+            } else {
+                certs = new X509Certificate[packageInfo.signatures.length];
+                for (int i = 0; i < certs.length; i++) {
+                    byte[] cert = packageInfo.signatures[i].toByteArray();
+                    InputStream inStream = new ByteArrayInputStream(cert);
+                    certs[i] = (X509Certificate) certificateFactory.generateCertificate(inStream);
+                }
             }
             return certs;
         }
@@ -383,6 +398,7 @@ public class APKParser {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void parse(String apkPath, Context context) {
         clean();
@@ -434,7 +450,11 @@ public class APKParser {
 
         mPackageName = packageInfo.packageName;
         mVersionName = packageInfo.versionName;
-        mVersionCode = String.valueOf(packageInfo.versionCode);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            mVersionCode = String.valueOf(packageInfo.getLongVersionCode());
+        } else {
+            mVersionCode = String.valueOf(packageInfo.versionCode);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

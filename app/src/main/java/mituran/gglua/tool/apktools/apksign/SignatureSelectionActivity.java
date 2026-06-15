@@ -2,11 +2,11 @@ package mituran.gglua.tool.apktools.apksign;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,11 +16,14 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 签名选择界面
@@ -36,6 +39,9 @@ public class SignatureSelectionActivity extends Activity {
 
         void onCancelled();
     }
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private SignatureCallback mCallback;
 
@@ -430,7 +436,7 @@ public class SignatureSelectionActivity extends Activity {
                 String keystorePath = "/sdcard/GGtool/keystore/" + filename;
 
                 // 异步生成密钥库
-                new GenerateKeystoreTask(name, keystorePath, keystorePass, alias, keyPass, dn).execute();
+                executeGenerateKeystore(name, keystorePath, keystorePass, alias, keyPass, dn);
             }
         });
 
@@ -445,65 +451,56 @@ public class SignatureSelectionActivity extends Activity {
     }
 
     /**
-     * 异步生成密钥库任务
+     * 异步生成密钥库（使用 ExecutorService 替代 AsyncTask）
      */
-    private class GenerateKeystoreTask extends AsyncTask<Void, Void, Boolean> {
-        private ProgressDialog mProgressDialog;
-        private String mName, mPath, mKeystorePass, mAlias, mKeyPass, mDN;
+    private void executeGenerateKeystore(String name, String path, String keystorePass, String alias, String keyPass, String dn) {
+        final AlertDialog[] progressRef = new AlertDialog[1];
+        AlertDialog.Builder progressBuilder = new AlertDialog.Builder(this);
+        LinearLayout progressLayout = new LinearLayout(this);
+        progressLayout.setOrientation(LinearLayout.HORIZONTAL);
+        progressLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        progressLayout.setPadding(60, 50, 60, 50);
+        ProgressBar pb = new ProgressBar(this);
+        pb.setIndeterminate(true);
+        int pbSize = (int) (getResources().getDisplayMetrics().density * 28);
+        LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(pbSize, pbSize);
+        pb.setLayoutParams(pbParams);
+        progressLayout.addView(pb);
+        TextView tvMsg = new TextView(this);
+        tvMsg.setText("正在生成密钥库...");
+        tvMsg.setTextSize(16);
+        tvMsg.setPadding(40, 0, 0, 0);
+        progressLayout.addView(tvMsg);
+        progressBuilder.setView(progressLayout);
+        progressBuilder.setCancelable(false);
+        AlertDialog progressDialog = progressBuilder.create();
+        progressRef[0] = progressDialog;
+        progressDialog.show();
 
-        GenerateKeystoreTask(String name, String path, String keystorePass,
-                             String alias, String keyPass, String dn) {
-            this.mName = name;
-            this.mPath = path;
-            this.mKeystorePass = keystorePass;
-            this.mAlias = alias;
-            this.mKeyPass = keyPass;
-            this.mDN = dn;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            mProgressDialog = new ProgressDialog(SignatureSelectionActivity.this);
-            mProgressDialog.setMessage("正在生成密钥库...");
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.show();
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            // 确保目录存在
-            File keystoreFile = new File(mPath);
+        executor.execute(() -> {
+            File keystoreFile = new File(path);
             File parentDir = keystoreFile.getParentFile();
             if (!parentDir.exists()) {
                 parentDir.mkdirs();
             }
-
             KeyStoreGenerator generator = new KeyStoreGenerator();
-            return generator.generateKeyStore(mPath, mKeystorePass, mAlias, mKeyPass, mDN, 25);
-        }
+            boolean success = generator.generateKeyStore(path, keystorePass, alias, keyPass, dn, 25);
 
-        @Override
-        protected void onPostExecute(Boolean success) {
-            mProgressDialog.dismiss();
-
-            if (success) {
-                SignatureConfig.Config config = new SignatureConfig.Config(
-                        mName, mPath, mKeystorePass, mAlias, mKeyPass, false
-                );
-
-                if (mSignatureConfig.saveConfig(config)) {
-                    Toast.makeText(SignatureSelectionActivity.this,
-                            "密钥库生成成功并已保存配置", Toast.LENGTH_SHORT).show();
-                    showSignatureDialog();
+            mainHandler.post(() -> {
+                progressRef[0].dismiss();
+                if (success) {
+                    SignatureConfig.Config config = new SignatureConfig.Config(name, path, keystorePass, alias, keyPass, false);
+                    if (mSignatureConfig.saveConfig(config)) {
+                        Toast.makeText(SignatureSelectionActivity.this, "密钥库生成成功并已保存配置", Toast.LENGTH_SHORT).show();
+                        showSignatureDialog();
+                    } else {
+                        Toast.makeText(SignatureSelectionActivity.this, "密钥库生成成功但保存配置失败", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(SignatureSelectionActivity.this,
-                            "密钥库生成成功但保存配置失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SignatureSelectionActivity.this, "密钥库生成失败", Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(SignatureSelectionActivity.this,
-                        "密钥库生成失败", Toast.LENGTH_SHORT).show();
-            }
-        }
+            });
+        });
     }
 
     /**
