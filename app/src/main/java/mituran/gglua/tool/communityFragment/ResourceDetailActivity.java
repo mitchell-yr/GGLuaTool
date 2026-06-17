@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -73,10 +74,11 @@ public class ResourceDetailActivity extends AppCompatActivity {
         parseIntent();
     }
 
+    @SuppressWarnings("deprecation")
     private void setStatusBarColor() {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(0xFF6200EE);
+        window.setStatusBarColor(getResources().getColor(R.color.purple_700, getTheme()));
     }
 
     private void initViews() {
@@ -118,6 +120,7 @@ public class ResourceDetailActivity extends AppCompatActivity {
                 .build();
     }
 
+    @SuppressWarnings("deprecation")
     private void parseIntent() {
         Intent intent = getIntent();
         if (intent == null) {
@@ -126,6 +129,7 @@ public class ResourceDetailActivity extends AppCompatActivity {
         }
 
         // 尝试从Intent获取序列化对象
+        // noinspection deprecation
         resourceItem = (ResourceItem) intent.getSerializableExtra(EXTRA_RESOURCE_ITEM);
 
         if (resourceItem != null) {

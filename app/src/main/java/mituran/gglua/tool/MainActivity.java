@@ -14,6 +14,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -66,6 +69,13 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        // 处理系统窗口边衬区（状态栏、导航栏），防止顶部内容被状态栏遮挡
+        // Android 15+ 强制 edge-to-edge 显示，须手动处理 insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragment_container), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
+            return insets;
+        });
 
         //底部导航栏..............................................................................................
         bottomNavigationView = findViewById(R.id.bottom_navigation);
@@ -287,6 +297,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 新增：引导用户去设置页面
+    @SuppressWarnings("deprecation")
     private void showGoToSettingsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("需要存储权限");
@@ -313,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // 显示管理存储权限对话框（Android 11及以上）
+    @SuppressWarnings("deprecation")
     private void showManageStoragePermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("存储权限申请");
@@ -366,6 +378,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Activity结果回调（Android 11及以上）
+    @SuppressWarnings("deprecation")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -450,6 +463,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         // 先检查当前Fragment是否处理了返回键

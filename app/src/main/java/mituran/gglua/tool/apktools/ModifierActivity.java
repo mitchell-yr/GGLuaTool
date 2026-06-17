@@ -1,6 +1,6 @@
 package mituran.gglua.tool.apktools;
 
-import android.app.ProgressDialog;
+import mituran.gglua.tool.util.LoadingDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
@@ -108,7 +108,7 @@ public class ModifierActivity extends AppCompatActivity {
 
     private String pendingInstallPath = null;
 
-    private ProgressDialog progressDialog;
+    private LoadingDialog loadingDialog;
 
     // 已分析到的启动入口信息
     private boolean hasMultipleLauncherEntries = false;
@@ -528,7 +528,7 @@ public class ModifierActivity extends AppCompatActivity {
         }
         cb.setText(displayText);
         cb.setChecked(checked);
-        cb.setButtonTintList(getResources().getColorStateList(R.color.purple_700));
+        cb.setButtonTintList(getResources().getColorStateList(R.color.purple_700, getTheme()));
         cb.setTextSize(14);
         cb.setPadding(4, 4, 4, 4);
 
@@ -1787,23 +1787,22 @@ public class ModifierActivity extends AppCompatActivity {
     }
 
     private void showProgressDialog(String message) {
-        if (progressDialog == null) {
-            progressDialog = new ProgressDialog(this);
-            progressDialog.setCancelable(false);
+        if (loadingDialog == null) {
+            loadingDialog = new LoadingDialog(this);
         }
-        progressDialog.setMessage(message);
-        progressDialog.show();
+        loadingDialog.setMessage(message);
+        loadingDialog.show();
     }
 
     private void updateProgressDialog(String message) {
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.setMessage(message);
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.setMessage(message);
         }
     }
 
     private void dismissProgressDialog() {
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
         }
     }
 

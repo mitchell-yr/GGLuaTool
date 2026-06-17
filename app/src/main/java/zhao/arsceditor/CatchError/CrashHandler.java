@@ -25,7 +25,7 @@ import android.widget.Toast;
 /**
  * ClassName: CrashHandler Function:
  * UncaughtException处理类,当程序发生Uncaught异常的时候,由该类来接管程序,并记录发送错误报告.
- * 
+ *
  * @author Norris Norris.sly@gmail.com
  * @version
  * @since Ver 1.0 I used to be a programmer like you, then I took an arrow in
@@ -36,32 +36,32 @@ import android.widget.Toast;
 public class CrashHandler implements UncaughtExceptionHandler {
 	/**
 	 * Log日志的tag String : TAG
-	 * 
+	 *
 	 * @since 2013-3-21下午8:44:28
 	 */
 	private static final String TAG = "NorrisInfo";
 	/**
 	 * 系统默认的UncaughtException处理类 Thread.UncaughtExceptionHandler :
 	 * mDefaultHandler
-	 * 
+	 *
 	 * @since 2013-3-21下午8:44:43
 	 */
 	private Thread.UncaughtExceptionHandler mDefaultHandler;
 	/**
 	 * CrashHandler实例 CrashHandler : mInstance
-	 * 
+	 *
 	 * @since 2013-3-21下午8:44:53
 	 */
 	private static CrashHandler mInstance = new CrashHandler();
 	/**
 	 * 程序的Context对象 Context : mContext
-	 * 
+	 *
 	 * @since 2013-3-21下午8:45:02
 	 */
 	private Context mContext;
 	/**
 	 * 用来存储设备信息和异常信息 Map<String,String> : mLogInfo
-	 * 
+	 *
 	 * @since 2013-3-21下午8:46:15
 	 */
 	private Map<String, String> mLogInfo = new HashMap<String, String>();
@@ -74,7 +74,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 
 	/**
 	 * getInstance:{获取CrashHandler实例 ,单例模式 } ──────────────────────────────────
-	 * 
+	 *
 	 * @return CrashHandler
 	 * @throws @since
 	 *             I used to be a programmer like you, then I took an arrow in
@@ -89,7 +89,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 
 	/**
 	 * init:{初始化} ──────────────────────────────────
-	 * 
+	 *
 	 * @param paramContext
 	 * @return void
 	 * @throws @since
@@ -109,7 +109,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 
 	/**
 	 * 当UncaughtException发生时会转入该重写的方法来处理 (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Thread.UncaughtExceptionHandler#uncaughtException(java.lang.Thread,
 	 *      java.lang.Throwable)
 	 */
@@ -135,7 +135,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 	/**
 	 * handleException:{自定义错误处理,收集错误信息 发送错误报告等操作均在此完成.}
 	 * ──────────────────────────────────
-	 * 
+	 *
 	 * @param paramThrowable
 	 * @return true:如果处理了该异常信息;否则返回false.
 	 * @throws @since
@@ -162,11 +162,11 @@ public class CrashHandler implements UncaughtExceptionHandler {
 		// 发送给作者
 		/*
 		 * new Thread(new Runnable() { public void run() {
-		 * 
+		 *
 		 * new
 		 * sendreport().email("Debug报告",Environment.getExternalStorageDirectory(
 		 * ).getPath() + "/" + "SHC" + "/" +"Debug" + "/" + "CrashLog.log"); }
-		 * 
+		 *
 		 * }).start();
 		 */
 		return true;
@@ -174,7 +174,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 
 	/**
 	 * getDeviceInfo:{获取设备参数信息} ──────────────────────────────────
-	 * 
+	 *
 	 * @param paramContext
 	 * @throws @since
 	 *             I used to be a programmer like you, then I took an arrow in
@@ -183,6 +183,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 	 *             2013-3-24下午12:30:02 Modified By Norris
 	 *             ──────────────────────────────────────────────────────────────────────────────────────────────────────
 	 */
+	@SuppressWarnings("deprecation")
 	public void getDeviceInfo(Context paramContext) {
 		try {
 			// 获得包管理器
@@ -192,7 +193,12 @@ public class CrashHandler implements UncaughtExceptionHandler {
 					PackageManager.GET_ACTIVITIES);
 			if (mPackageInfo != null) {
 				String versionName = mPackageInfo.versionName == null ? "null" : mPackageInfo.versionName;
-				String versionCode = mPackageInfo.versionCode + "";
+				String versionCode;
+				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+					versionCode = mPackageInfo.getLongVersionCode() + "";
+				} else {
+					versionCode = mPackageInfo.versionCode + "";
+				}
 				mLogInfo.put("versionName", versionName);
 				mLogInfo.put("versionCode", versionCode);
 			}
@@ -218,7 +224,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 	/**
 	 * saveCrashLogToFile:{将崩溃的Log保存到本地} TODO 可拓展，将Log上传至指定服务器路径
 	 * ──────────────────────────────────
-	 * 
+	 *
 	 * @param paramThrowable
 	 * @return FileName
 	 * @throws @since

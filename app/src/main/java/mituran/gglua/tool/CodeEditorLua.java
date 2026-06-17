@@ -29,6 +29,7 @@ import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
@@ -59,6 +60,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolve
 import io.github.rosemoe.sora.widget.CodeEditor;
 import mituran.gglua.tool.luaTool.LuaFormatterWrapper;
 import mituran.gglua.tool.luaTool.LuaSyntaxChecker;
+import mituran.gglua.tool.util.LoadingDialog;
 
 
 public class CodeEditorLua extends AppCompatActivity {
@@ -269,6 +271,14 @@ public class CodeEditorLua extends AppCompatActivity {
             }
         };
         autoSaveHandler.postDelayed(autoSaveRunnable, AUTO_SAVE_INTERVAL_MS);
+
+        // Replace deprecated onBackPressed
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showExitDialog();
+            }
+        });
     }
 
     // 加载编辑器设置
@@ -299,7 +309,7 @@ public class CodeEditorLua extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
-        editor.putFloat(PREF_FONT_SIZE, codeEditor.getTextSizePx() / getResources().getDisplayMetrics().scaledDensity);
+        editor.putFloat(PREF_FONT_SIZE, codeEditor.getTextSizePx() / getResources().getDisplayMetrics().density);
         editor.putBoolean(PREF_LINE_NUMBERS, codeEditor.isLineNumberEnabled());
         editor.putBoolean(PREF_WORD_WRAP, codeEditor.isWordwrap());
 
@@ -895,10 +905,7 @@ public class CodeEditorLua extends AppCompatActivity {
                 .show();
     }
 
-    @Override
-    public void onBackPressed() {
-        showExitDialog();
-    }
+    // onBackPressed is deprecated; use OnBackPressedDispatcher via onCreate
 
     private void showExitDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -971,12 +978,13 @@ public class CodeEditorLua extends AppCompatActivity {
         }
     }
 
-    private android.app.ProgressDialog loadingDialog;
+    private LoadingDialog loadingDialog;
 
     private void showLoadingDialog(String msg) {
-        loadingDialog = new android.app.ProgressDialog(this);
+        if (loadingDialog == null) {
+            loadingDialog = new LoadingDialog(this);
+        }
         loadingDialog.setMessage(msg);
-        loadingDialog.setCancelable(false);
         loadingDialog.show();
     }
 

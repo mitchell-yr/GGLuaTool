@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 
     private void startAutoSave() {
         if (autoSaveHandler == null) {
-            autoSaveHandler = new android.os.Handler();
+            autoSaveHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         }
         autoSaveRunnable = new Runnable() {
             @Override
@@ -1589,6 +1589,7 @@ public class MainActivity extends Activity {
 
     // ==================== 退出提醒 ====================
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         if (hasUnsavedChanges) {

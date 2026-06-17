@@ -125,6 +125,7 @@ public class PluginManagerActivity extends AppCompatActivity implements PluginAd
         popup.show();
     }
 
+    @SuppressWarnings("deprecation")
     private void importPlugin() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/zip");
@@ -132,6 +133,7 @@ public class PluginManagerActivity extends AppCompatActivity implements PluginAd
         startActivityForResult(Intent.createChooser(intent, "选择插件zip文件"), REQUEST_CODE_IMPORT);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
