@@ -13,14 +13,14 @@
 这是一个悠然制作的GGlua脚本工具。用于编写、编译与反编译、加密适用于GameGuardian的lua脚本的工具。   
 此软件将加入更多功能，正在持续更新！
 
-此软件由AndroidStudio使用了java制作。
+此软件使用了AndroidStudio由java制作。
 
 ## 注意事项
 
 请遵守开源协议！此软件仅供学习交流使用，**禁止用于违法用途**(如制作游戏外挂等非法用途)，若造成任何后果与开发者无关  
 此项目使用了deepseek、claude等辅助，请按照《人工智能生成合成内容标识办法》等您所在地当地法规标识生成式人工智能使用  
 
-由于GG的luaj虚拟机经过了魔改（jse3.0.1但是支持lua5.3特性），导致一些技术问题还待解决
+由于GG的luaj虚拟机经过了魔改（jse3.0.1但是支持lua5.3特性），导致一些技术问题还待解决。作为替代方案，我们使用了api调用GG修改器的原生功能，详情见下方。
 
 ## 项目结构
 
@@ -82,7 +82,7 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 ### 目前支持
 
 | 功能     | 说明                                             |
-| ------ |------------------------------------------------|
+|--------|------------------------------------------------|
 | 脚本编辑器  | 基于sora-editor，支持代码补全、语法高亮                      |
 | 脚本模板   | 一键插入常用脚本模板                                     |
 | 构建发行品  | 一键生成定制GG客户端，可自选添加自定义函数和内置脚本                    |
@@ -91,9 +91,10 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 | 语法检查   | Lua语法检查                                        |
 | 可视化编辑  | 积木式可视化Lua脚本编辑                                  |
 | Lua虚拟机 | 内置支持GG函数的lua虚拟机（用于过防御、反检测、函数调用自吐和动态调试），代码一键试运行 |
+| 调用GG接口 | 对接带有api的GG实现运行                                 |
 
 > 注意：上述功能随时可能变动
-
+> 调用GG接口依赖于开源项目[GameGuardian-Api](https://github.com/mitchell-yr/GameGuardian-Api)，需要安装这个项目内指定版本GG
 ### 即将支持
 
 | 功能    | 说明                                 |
@@ -104,10 +105,38 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 | 动态调试  | 基于内置luaj的即时动态调试（未来加入插桩、变量追踪）       |
 | 内置框架  | 基于spacecore（安卓9-14），后续加入blackbox适配 |
 
+### 功能测试
+已通过小米8(安卓10)、红米k40(安卓11)、一加15(安卓16)、iqoo15ultra(安卓16)的真机测试，通过pixel9(安卓14)模拟机测试
+
 ## 使用方法
 
-### 如何给luaj虚拟机添加/修改函数
+### 脚本执行
+我们采用了内置lua虚拟机和对接GG接口(GameGuardian-Api)两套方案
+#### 虚拟机函数添加
+在`LuaEngine.java`中`createGgLibrary`方法中按照示例添加GG函数（即`gg.xxx()`）:
+```lua
+ggTable.set("方法名", new VarArgFunction() {
+    @Override
+    public Varargs invoke(Varargs args) {
+        //此处写具体实现
+        logToTextView("[gg.方法名] 日志信息\n");//向运行日志回调的信息
+        return 返回值;
+    }
+    });
+```
 
+#### GameGuardian-Api相关api
+| 端点                     | 方法   | 说明                                                        |
+| ---------------------- | ---- | --------------------------------------------------------- |
+| `/api/status`          | GET  | 服务状态                                                      |
+| `/api/test`            | GET  | 连接测试                                                      |
+| `/api/gg/info`         | GET  | 目标进程信息（PID、包名）                                            |
+| `/api/gg/status`       | GET  | 搜索结果数量                                                    |
+| `/api/gg/searchNumber` | POST | 搜索数值 `{"value":"100","type":1}`（实验api，不稳定，请正式使用runScript） |
+| `/api/gg/getResults`   | POST | 获取搜索结果（最多100条）（实验api，不稳定，请正式使用runScript）                  |
+| `/api/gg/editAll`      | POST | 批量修改 `{"value":"999"}`（实验api，不稳定，请正式使用runScript）          |
+| `/api/gg/runScript`    | POST | **执行任意 GG Lua 脚本（请主要使用这个）**                               |
+>注意，调用api要防止阻塞线程
 ### 如何制作GG修改器函数包
 
 函数包（.ggfunc）是`定制GG修改器`功能中用于给修改器的luaj虚拟机添加用户自定义函数的，一个正常的函数包（ZIP 结构）应该包含：  

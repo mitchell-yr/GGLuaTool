@@ -1,7 +1,10 @@
 package mituran.gglua.tool.VisualLuaScriptEditor.luaksh;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
@@ -13,13 +16,21 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+
+import org.json.JSONObject;
 
 import mituran.gglua.tool.LuaEngine;
 import mituran.gglua.tool.R;
@@ -50,11 +61,14 @@ public class MainActivity extends Activity {
     private android.os.Handler autoSaveHandler;
     private Runnable autoSaveRunnable;
     private boolean autoBackupEnabled = false;
+    private String runnerType = "builtin";
 
     private static final String PREFS_NAME = "visual_lua_editor_settings";
     private static final String KEY_AUTO_SAVE_ENABLED = "auto_save_enabled";
     private static final String KEY_AUTO_SAVE_INTERVAL = "auto_save_interval_sec";
     private static final String KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled";
+    private static final String KEY_RUNNER = "runner";
+    private static final String KEY_NATIVE_GG_HINT_DISMISSED = "native_gg_hint_dismissed";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +94,7 @@ public class MainActivity extends Activity {
         autoSaveEnabled = prefs.getBoolean(KEY_AUTO_SAVE_ENABLED, false);
         autoSaveIntervalSec = prefs.getInt(KEY_AUTO_SAVE_INTERVAL, 60);
         autoBackupEnabled = prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false);
+        runnerType = prefs.getString(KEY_RUNNER, "builtin");
     }
 
     private void saveSettings() {
@@ -88,6 +103,7 @@ public class MainActivity extends Activity {
                 .putBoolean(KEY_AUTO_SAVE_ENABLED, autoSaveEnabled)
                 .putInt(KEY_AUTO_SAVE_INTERVAL, autoSaveIntervalSec)
                 .putBoolean(KEY_AUTO_BACKUP_ENABLED, autoBackupEnabled)
+                .putString(KEY_RUNNER, runnerType)
                 .apply();
     }
 
@@ -352,6 +368,42 @@ public class MainActivity extends Activity {
         restoreRow.addView(restoreBtn);
         layout.addView(restoreRow);
 
+        // 分隔线
+        View divider2 = new View(this);
+        divider2.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 2));
+        divider2.setBackgroundColor(0xFFE0E0E0);
+        LinearLayout.LayoutParams divider2Params = (LinearLayout.LayoutParams) divider2.getLayoutParams();
+        divider2Params.setMargins(0, 16, 0, 16);
+        divider2.setLayoutParams(divider2Params);
+        layout.addView(divider2);
+
+        // 运行设置
+        LinearLayout runnerRow = new LinearLayout(this);
+        runnerRow.setOrientation(LinearLayout.HORIZONTAL);
+        runnerRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        runnerRow.setClickable(true);
+        android.util.TypedValue outValue = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+        runnerRow.setBackgroundResource(outValue.resourceId);
+
+        TextView runnerLabel = new TextView(this);
+        runnerLabel.setText("运行设置");
+        runnerLabel.setTextSize(16);
+        runnerLabel.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView runnerValue = new TextView(this);
+        String displayName = "native_gg".equals(runnerType) ? "原生GG接口" : "内置lua虚拟机";
+        runnerValue.setText(displayName);
+        runnerValue.setTextSize(14);
+        runnerValue.setTextColor(0xFF757575);
+
+        runnerRow.addView(runnerLabel);
+        runnerRow.addView(runnerValue);
+        runnerRow.setOnClickListener(v -> showRunnerSettingsDialog(runnerValue));
+        layout.addView(runnerRow);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("设置");
         builder.setView(layout);
@@ -378,6 +430,94 @@ public class MainActivity extends Activity {
         });
         builder.setNegativeButton("取消", null);
         builder.show();
+    }
+
+    private void showRunnerSettingsDialog(TextView runnerValueView) {
+        String[] runnerNames = {"内置lua虚拟机", "原生GG接口"};
+        String[] runnerValues = {"builtin", "native_gg"};
+        int currentIndex = "native_gg".equals(runnerType) ? 1 : 0;
+
+        new AlertDialog.Builder(this)
+                .setTitle("运行器")
+                .setSingleChoiceItems(runnerNames, currentIndex, null)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        String selectedRunner = runnerValues[selected];
+                        if ("native_gg".equals(selectedRunner)) {
+                            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                            boolean hintDismissed = prefs.getBoolean(KEY_NATIVE_GG_HINT_DISMISSED, false);
+                            if (hintDismissed) {
+                                runnerType = selectedRunner;
+                                saveSettings();
+                                runnerValueView.setText("原生GG接口");
+                                Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                            } else {
+                                showNativeGgHintDialog(selectedRunner, runnerValueView);
+                            }
+                        } else {
+                            runnerType = selectedRunner;
+                            saveSettings();
+                            runnerValueView.setText("内置lua虚拟机");
+                            Toast.makeText(this, "已切换为内置lua虚拟机", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showNativeGgHintDialog(String targetRunner, TextView runnerValueView) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+
+        TextView tvHint = new TextView(this);
+        tvHint.setText("该功能需要您已安装带本地http接口特定版本GG修改器，请确保您已安装并打开GG");
+        tvHint.setTextColor(Color.BLACK);
+        tvHint.setTextSize(15);
+        layout.addView(tvHint);
+
+        CheckBox cbDontShow = new CheckBox(this);
+        cbDontShow.setText("不再显示");
+        cbDontShow.setTextColor(Color.GRAY);
+        cbDontShow.setTextSize(14);
+        LinearLayout.LayoutParams cbParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cbParams.topMargin = 16;
+        cbDontShow.setLayoutParams(cbParams);
+        layout.addView(cbDontShow);
+
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setView(layout)
+                .setPositiveButton("前往安装", (dialog, which) -> {
+                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    if (cbDontShow.isChecked()) {
+                        prefs.edit().putBoolean(KEY_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    runnerType = targetRunner;
+                    saveSettings();
+                    runnerValueView.setText("原生GG接口");
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/mitchell-yr/GameGuardian-Api/releases/"));
+                    startActivity(intent);
+                })
+                .setNeutralButton("已安装", (dialog, which) -> {
+                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    if (cbDontShow.isChecked()) {
+                        prefs.edit().putBoolean(KEY_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    runnerType = targetRunner;
+                    saveSettings();
+                    runnerValueView.setText("原生GG接口");
+                    Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", (dialog, which) -> {
+                    // 取消时不保存
+                })
+                .show();
     }
 
     // ==================== 恢复备份 ====================
@@ -906,6 +1046,14 @@ public class MainActivity extends Activity {
             return;
         }
 
+        if ("native_gg".equals(runnerType)) {
+            executeViaNativeGg(luaCode, generatedCode);
+        } else {
+            executeViaBuiltinLua(generatedCode, luaCode);
+        }
+    }
+
+    private void executeViaBuiltinLua(GeneratedLuaCode generatedCode, String luaCode) {
         // 重置错误定位
         errorTabIndex = -1;
         errorBlockIndex = -1;
@@ -923,7 +1071,7 @@ public class MainActivity extends Activity {
 
         // 显示执行对话框
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("脚本运行中...");
+        builder.setTitle("脚本运行中...（内置Lua虚拟机）");
         builder.setCancelable(false);
 
         ScrollView scrollView = new ScrollView(this);
@@ -937,7 +1085,6 @@ public class MainActivity extends Activity {
 
         AlertDialog dialog = builder.create();
 
-        // 对话框关闭后自动定位到出错代码块
         dialog.setOnDismissListener(d -> {
             if (errorTabIndex >= 0 && errorBlockIndex >= 0) {
                 scrollToErrorBlock();
@@ -946,7 +1093,6 @@ public class MainActivity extends Activity {
 
         dialog.show();
 
-        // 设置停止按钮
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             engine.close();
             errorTabIndex = -1;
@@ -955,12 +1101,10 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "已停止", Toast.LENGTH_SHORT).show();
         });
 
-        // 查看代码按钮
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
             showCodeViewDialog(luaCode);
         });
 
-        // 在新线程中执行脚本
         new Thread(() -> {
             try {
                 long startTime = System.currentTimeMillis();
@@ -984,7 +1128,6 @@ public class MainActivity extends Activity {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
                     logView.append("[错误] " + e.getMessage() + "\n");
 
-                    // 解析错误行号并定位代码块
                     int errorLine = GeneratedLuaCode.parseErrorLine(e.getMessage());
                     if (errorLine > 0) {
                         int[] lineInfo = generatedCode.getLineInfo(errorLine);
@@ -1007,6 +1150,158 @@ public class MainActivity extends Activity {
 
                     Toast.makeText(this, "脚本执行异常，关闭后将定位到出错代码块", Toast.LENGTH_LONG).show();
                 });
+            }
+        }).start();
+    }
+
+    private void executeViaNativeGg(String luaCode, GeneratedLuaCode generatedCode) {
+        errorTabIndex = -1;
+        errorBlockIndex = -1;
+
+        final TextView logView = new TextView(this);
+        logView.setTextSize(12);
+        logView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        logView.setPadding(16, 16, 16, 16);
+        logView.setTextIsSelectable(true);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("脚本运行中...（原生GG接口）");
+        builder.setCancelable(false);
+
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.addView(logView, new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT));
+
+        builder.setView(scrollView);
+        builder.setPositiveButton("关闭", null);
+        builder.setNegativeButton("查看代码", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnDismissListener(d -> {
+            if (errorTabIndex >= 0 && errorBlockIndex >= 0) {
+                scrollToErrorBlock();
+            }
+        });
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> dialog.dismiss());
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            showCodeViewDialog(luaCode);
+        });
+
+        new Thread(() -> {
+            Socket socket = null;
+            try {
+                // 用原始Socket发HTTP/1.0请求，避免HttpURLConnection在无Content-Length响应时阻塞
+                socket = new Socket();
+                socket.setTcpNoDelay(true);
+                socket.connect(new InetSocketAddress("127.0.0.1", 8080), 3000);
+                socket.setSoTimeout(15000);
+
+                byte[] body = luaCode.getBytes("UTF-8");
+
+                // GG服务器把Content-Length当字符数用（不是字节数），所以用luaCode.length()
+                StringBuilder request = new StringBuilder();
+                request.append("POST /api/gg/runScript HTTP/1.0\r\n");
+                request.append("Host: 127.0.0.1:8080\r\n");
+                request.append("Content-Type: text/plain; charset=utf-8\r\n");
+                request.append("Content-Length: ").append(luaCode.length()).append("\r\n");
+                request.append("Connection: close\r\n");
+                request.append("\r\n");
+
+                OutputStream os = socket.getOutputStream();
+                os.write(request.toString().getBytes("UTF-8"));
+                os.write(body);
+                os.flush();
+                socket.shutdownOutput();
+
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream(), "UTF-8"));
+
+                String statusLine = reader.readLine();
+                if (statusLine == null) {
+                    throw new IOException("服务器未返回状态行");
+                }
+
+                boolean isOk = statusLine.contains("200");
+
+                // 跳过响应头
+                String headerLine;
+                while ((headerLine = reader.readLine()) != null && headerLine.length() > 0) {
+                    // skip headers
+                }
+
+                // 读响应body（读到EOF）
+                StringBuilder responseBody = new StringBuilder();
+                String bodyLine;
+                while ((bodyLine = reader.readLine()) != null) {
+                    responseBody.append(bodyLine);
+                }
+                reader.close();
+
+                String responseStr = responseBody.toString();
+
+                if (isOk) {
+                    try {
+                        JSONObject json = new JSONObject(responseStr);
+                        boolean success = json.optBoolean("success", false);
+                        String result = json.optString("result", "");
+
+                        runOnUiThread(() -> {
+                            if (success) {
+                                logView.append("[成功] GG返回: " + result + "\n");
+                            } else {
+                                logView.append("[错误] GG返回失败: " + result + "\n");
+                            }
+                            dialog.setTitle("执行完成");
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v2 -> dialog.dismiss());
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            logView.append("[警告] JSON解析异常: " + e.getMessage() + "\n");
+                            logView.append("[信息] 原始响应: " + responseStr + "\n");
+                            dialog.setTitle("执行完成");
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                        });
+                    }
+                } else {
+                    String finalResp = responseStr;
+                    runOnUiThread(() -> {
+                        logView.append("[错误] HTTP状态异常: " + statusLine + "\n");
+                        if (!finalResp.isEmpty()) {
+                            logView.append("[错误] 响应: " + finalResp + "\n");
+                        }
+                        dialog.setTitle("执行失败");
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                    });
+                }
+
+            } catch (java.net.ConnectException e) {
+                runOnUiThread(() -> {
+                    logView.append("[错误] 连接被拒绝: 127.0.0.1:8080\n");
+                    logView.append("[错误] 请确保GG修改器已打开且HTTP服务已启动\n");
+                    dialog.setTitle("执行失败");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                });
+            } catch (java.net.SocketTimeoutException e) {
+                runOnUiThread(() -> {
+                    logView.append("[错误] 读取超时 (15s)，GG服务器可能正在执行脚本但未响应\n");
+                    logView.append("[错误] 请检查GG修改器状态\n");
+                    dialog.setTitle("执行失败");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    logView.append("[错误] 网络错误: " + e.getMessage() + "\n");
+                    dialog.setTitle("执行失败");
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText("关闭");
+                });
+            } finally {
+                if (socket != null) {
+                    try { socket.close(); } catch (Exception ignored) {}
+                }
             }
         }).start();
     }

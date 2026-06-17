@@ -2,15 +2,19 @@ package mituran.gglua.tool;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static final String PREFS_APP = "AppSettings";
     private static final String PREFS_EDITOR = "EditorSettings";
+    private static final String PREFS_VISUAL_EDITOR = "visual_lua_editor_settings";
     private static final String KEY_CARDS_VISIBLE = "home_cards_visible";
     private static final String KEY_CARDS_ORDER = "home_cards_order";
     private static final String KEY_PROJECT_SORT = "project_sort_mode";
@@ -50,6 +55,15 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String PREF_THEME = "theme";
     private static final String PREF_AUTO_SAVE = "autoSave";
     private static final String PREF_AUTO_BACKUP = "autoBackup";
+    private static final String PREF_RUNNER = "runner";
+    private static final String PREF_NATIVE_GG_HINT_DISMISSED = "native_gg_hint_dismissed";
+
+    // 可视化编辑器设置键值
+    private static final String KEY_VISUAL_AUTO_SAVE = "auto_save_enabled";
+    private static final String KEY_VISUAL_AUTO_SAVE_INTERVAL = "auto_save_interval_sec";
+    private static final String KEY_VISUAL_AUTO_BACKUP = "auto_backup_enabled";
+    private static final String KEY_VISUAL_RUNNER = "runner";
+    private static final String KEY_VISUAL_NATIVE_GG_HINT_DISMISSED = "native_gg_hint_dismissed";
 
     private RecyclerView rvHomeCards;
     private CardSettingAdapter cardAdapter;
@@ -59,10 +73,16 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView tvServerAddress;
     private TextView tvFontSizeValue;
     private TextView tvThemeValue;
+    private TextView tvRunnerValue;
     private SwitchMaterial switchLineNumbers, switchWordWrap, switchAutoSave, switchAutoBackup;
+
+    private SwitchMaterial switchVisualAutoSave, switchVisualAutoBackup;
+    private TextView tvVisualAutoSaveIntervalValue;
+    private TextView tvVisualRunnerValue;
 
     private SharedPreferences appPrefs;
     private SharedPreferences editorPrefs;
+    private SharedPreferences visualPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,12 +91,14 @@ public class SettingsActivity extends AppCompatActivity {
 
         appPrefs = getSharedPreferences(PREFS_APP, MODE_PRIVATE);
         editorPrefs = getSharedPreferences(PREFS_EDITOR, MODE_PRIVATE);
+        visualPrefs = getSharedPreferences(PREFS_VISUAL_EDITOR, MODE_PRIVATE);
 
         initToolbar();
         initHomeCards();
         initProjectSort();
         initServerAddress();
         initEditorSettings();
+        initVisualEditorSettings();
     }
 
     private void initToolbar() {
@@ -333,11 +355,18 @@ public class SettingsActivity extends AppCompatActivity {
         String theme = editorPrefs.getString(PREF_THEME, "solarized-light");
         tvThemeValue.setText(getThemeDisplayName(theme));
 
+        tvRunnerValue = findViewById(R.id.tv_runner_value);
+        String runner = editorPrefs.getString(PREF_RUNNER, "builtin");
+        tvRunnerValue.setText(getRunnerDisplayName(runner));
+
         // 字体大小点击
         findViewById(R.id.ll_font_size).setOnClickListener(v -> showFontSizeDialog());
 
         // 主题点击
         findViewById(R.id.ll_theme).setOnClickListener(v -> showThemeDialog());
+
+        // 运行设置点击
+        findViewById(R.id.ll_runner).setOnClickListener(v -> showRunnerSettingsDialog());
 
         // Switch 监听
         CompoundButton.OnCheckedChangeListener switchListener = (buttonView, isChecked) -> {
@@ -422,6 +451,254 @@ public class SettingsActivity extends AppCompatActivity {
             case "Monokai": return "Monokai";
             default: return themeKey;
         }
+    }
+
+    private String getRunnerDisplayName(String runnerKey) {
+        if ("native_gg".equals(runnerKey)) {
+            return "原生GG接口";
+        }
+        return "内置lua虚拟机";
+    }
+
+    private void showRunnerSettingsDialog() {
+        String currentRunner = editorPrefs.getString(PREF_RUNNER, "builtin");
+
+        String[] runnerNames = {"内置lua虚拟机", "原生GG接口"};
+        String[] runnerValues = {"builtin", "native_gg"};
+        int currentIndex = currentRunner.equals("native_gg") ? 1 : 0;
+
+        new AlertDialog.Builder(this)
+                .setTitle("运行器")
+                .setSingleChoiceItems(runnerNames, currentIndex, null)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        String selectedRunner = runnerValues[selected];
+                        if ("native_gg".equals(selectedRunner)) {
+                            boolean hintDismissed = editorPrefs.getBoolean(PREF_NATIVE_GG_HINT_DISMISSED, false);
+                            if (hintDismissed) {
+                                editorPrefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
+                                tvRunnerValue.setText(getRunnerDisplayName(selectedRunner));
+                                Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                            } else {
+                                showNativeGgHintDialog(selectedRunner);
+                            }
+                        } else {
+                            editorPrefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
+                            tvRunnerValue.setText(getRunnerDisplayName(selectedRunner));
+                            Toast.makeText(this, "已切换为内置lua虚拟机", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showNativeGgHintDialog(String targetRunner) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+
+        TextView tvHint = new TextView(this);
+        tvHint.setText("该功能需要您已安装带本地http接口特定版本GG修改器，请确保您已安装并打开GG");
+        tvHint.setTextColor(Color.BLACK);
+        tvHint.setTextSize(15);
+        layout.addView(tvHint);
+
+        CheckBox cbDontShow = new CheckBox(this);
+        cbDontShow.setText("不再显示");
+        cbDontShow.setTextColor(Color.GRAY);
+        cbDontShow.setTextSize(14);
+        LinearLayout.LayoutParams cbParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cbParams.topMargin = 16;
+        cbDontShow.setLayoutParams(cbParams);
+        layout.addView(cbDontShow);
+
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setView(layout)
+                .setPositiveButton("前往安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        editorPrefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    editorPrefs.edit().putString(PREF_RUNNER, targetRunner).apply();
+                    tvRunnerValue.setText(getRunnerDisplayName(targetRunner));
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/mitchell-yr/GameGuardian-Api/releases/"));
+                    startActivity(intent);
+                })
+                .setNeutralButton("已安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        editorPrefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    editorPrefs.edit().putString(PREF_RUNNER, targetRunner).apply();
+                    tvRunnerValue.setText(getRunnerDisplayName(targetRunner));
+                    Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", (dialog, which) -> {
+                    // 取消时不保存，保持原来的运行器选择
+                })
+                .show();
+    }
+
+    // ==================== 可视化编辑器设置 ====================
+
+    private void initVisualEditorSettings() {
+        switchVisualAutoSave = findViewById(R.id.switch_visual_auto_save);
+        switchVisualAutoBackup = findViewById(R.id.switch_visual_auto_backup);
+        tvVisualAutoSaveIntervalValue = findViewById(R.id.tv_visual_auto_save_interval_value);
+        tvVisualRunnerValue = findViewById(R.id.tv_visual_runner_value);
+
+        // 加载当前值
+        boolean visualAutoSave = visualPrefs.getBoolean(KEY_VISUAL_AUTO_SAVE, false);
+        switchVisualAutoSave.setChecked(visualAutoSave);
+
+        int visualAutoSaveInterval = visualPrefs.getInt(KEY_VISUAL_AUTO_SAVE_INTERVAL, 60);
+        tvVisualAutoSaveIntervalValue.setText(String.valueOf(visualAutoSaveInterval));
+
+        boolean visualAutoBackup = visualPrefs.getBoolean(KEY_VISUAL_AUTO_BACKUP, false);
+        switchVisualAutoBackup.setChecked(visualAutoBackup);
+
+        String visualRunner = visualPrefs.getString(KEY_VISUAL_RUNNER, "builtin");
+        tvVisualRunnerValue.setText(getVisualRunnerDisplayName(visualRunner));
+
+        // Switch 监听
+        switchVisualAutoSave.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            visualPrefs.edit().putBoolean(KEY_VISUAL_AUTO_SAVE, isChecked).apply();
+        });
+
+        switchVisualAutoBackup.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            visualPrefs.edit().putBoolean(KEY_VISUAL_AUTO_BACKUP, isChecked).apply();
+        });
+
+        // 保存间隔点击
+        findViewById(R.id.ll_visual_auto_save_interval).setOnClickListener(v ->
+                showVisualAutoSaveIntervalDialog());
+
+        // 运行设置点击
+        findViewById(R.id.ll_visual_runner).setOnClickListener(v ->
+                showVisualRunnerSettingsDialog());
+    }
+
+    private void showVisualAutoSaveIntervalDialog() {
+        int currentInterval = visualPrefs.getInt(KEY_VISUAL_AUTO_SAVE_INTERVAL, 60);
+        String[] intervals = {"5", "10", "15", "30", "60", "120", "300"};
+
+        int currentIndex = 0;
+        String currentStr = String.valueOf(currentInterval);
+        for (int i = 0; i < intervals.length; i++) {
+            if (intervals[i].equals(currentStr)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("选择保存间隔（秒）")
+                .setSingleChoiceItems(intervals, currentIndex, null)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        int interval = Integer.parseInt(intervals[selected]);
+                        visualPrefs.edit().putInt(KEY_VISUAL_AUTO_SAVE_INTERVAL, interval).apply();
+                        tvVisualAutoSaveIntervalValue.setText(intervals[selected]);
+                        Toast.makeText(this, "保存间隔已设置为 " + intervals[selected] + " 秒", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private String getVisualRunnerDisplayName(String runnerKey) {
+        if ("native_gg".equals(runnerKey)) {
+            return "原生GG接口";
+        }
+        return "内置lua虚拟机";
+    }
+
+    private void showVisualRunnerSettingsDialog() {
+        String currentRunner = visualPrefs.getString(KEY_VISUAL_RUNNER, "builtin");
+
+        String[] runnerNames = {"内置lua虚拟机", "原生GG接口"};
+        String[] runnerValues = {"builtin", "native_gg"};
+        int currentIndex = "native_gg".equals(currentRunner) ? 1 : 0;
+
+        new AlertDialog.Builder(this)
+                .setTitle("运行器")
+                .setSingleChoiceItems(runnerNames, currentIndex, null)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        String selectedRunner = runnerValues[selected];
+                        if ("native_gg".equals(selectedRunner)) {
+                            boolean hintDismissed = visualPrefs.getBoolean(KEY_VISUAL_NATIVE_GG_HINT_DISMISSED, false);
+                            if (hintDismissed) {
+                                visualPrefs.edit().putString(KEY_VISUAL_RUNNER, selectedRunner).apply();
+                                tvVisualRunnerValue.setText(getVisualRunnerDisplayName(selectedRunner));
+                                Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                            } else {
+                                showVisualNativeGgHintDialog(selectedRunner);
+                            }
+                        } else {
+                            visualPrefs.edit().putString(KEY_VISUAL_RUNNER, selectedRunner).apply();
+                            tvVisualRunnerValue.setText(getVisualRunnerDisplayName(selectedRunner));
+                            Toast.makeText(this, "已切换为内置lua虚拟机", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showVisualNativeGgHintDialog(String targetRunner) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+
+        TextView tvHint = new TextView(this);
+        tvHint.setText("该功能需要您已安装带本地http接口特定版本GG修改器，请确保您已安装并打开GG");
+        tvHint.setTextColor(Color.BLACK);
+        tvHint.setTextSize(15);
+        layout.addView(tvHint);
+
+        CheckBox cbDontShow = new CheckBox(this);
+        cbDontShow.setText("不再显示");
+        cbDontShow.setTextColor(Color.GRAY);
+        cbDontShow.setTextSize(14);
+        LinearLayout.LayoutParams cbParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cbParams.topMargin = 16;
+        cbDontShow.setLayoutParams(cbParams);
+        layout.addView(cbDontShow);
+
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setView(layout)
+                .setPositiveButton("前往安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        visualPrefs.edit().putBoolean(KEY_VISUAL_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    visualPrefs.edit().putString(KEY_VISUAL_RUNNER, targetRunner).apply();
+                    tvVisualRunnerValue.setText(getVisualRunnerDisplayName(targetRunner));
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/mitchell-yr/GameGuardian-Api/releases/"));
+                    startActivity(intent);
+                })
+                .setNeutralButton("已安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        visualPrefs.edit().putBoolean(KEY_VISUAL_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    visualPrefs.edit().putString(KEY_VISUAL_RUNNER, targetRunner).apply();
+                    tvVisualRunnerValue.setText(getVisualRunnerDisplayName(targetRunner));
+                    Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", (dialog, which) -> {
+                    // 取消时不保存
+                })
+                .show();
     }
 
     // ==================== RecyclerView Adapter ====================

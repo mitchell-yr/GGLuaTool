@@ -19,10 +19,13 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +43,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +70,8 @@ public class CodeEditorLua extends AppCompatActivity {
     private static final String PREF_THEME = "theme";
     private static final String PREF_AUTO_SAVE = "autoSave";
     private static final String PREF_AUTO_BACKUP = "autoBackup";
+    private static final String PREF_RUNNER = "runner";
+    private static final String PREF_NATIVE_GG_HINT_DISMISSED = "native_gg_hint_dismissed";
 
     private static final long AUTO_SAVE_INTERVAL_MS = 30_000; // 30秒自动保存
     private android.os.Handler autoSaveHandler;
@@ -400,6 +408,7 @@ public class CodeEditorLua extends AppCompatActivity {
         popupMenu.getMenu().add(0, 2, 0, "另存为");
         popupMenu.getMenu().add(0, 3, 0, "导入模板");
         popupMenu.getMenu().add(0, 11, 0, "手动备份");
+        popupMenu.getMenu().add(0, 14, 0, "运行设置");
 
         SubMenu editorSubMenu = popupMenu.getMenu().addSubMenu(0, 5, 0, "编辑器设置");
         editorSubMenu.add(0, 6, 0, "主题设置");
@@ -445,6 +454,9 @@ public class CodeEditorLua extends AppCompatActivity {
                     case 13:
                         toggleAutoBackup();
                         break;
+                    case 14:
+                        showRunnerSettings();
+                        break;
                 }
                 return true;
             }
@@ -474,6 +486,88 @@ public class CodeEditorLua extends AppCompatActivity {
         boolean current = prefs.getBoolean(PREF_AUTO_BACKUP, false);
         prefs.edit().putBoolean(PREF_AUTO_BACKUP, !current).apply();
         Toast.makeText(this, "自动备份已" + (!current ? "开启" : "关闭") + "（每30秒）", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showRunnerSettings() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String currentRunner = prefs.getString(PREF_RUNNER, "builtin");
+
+        String[] runnerNames = {"内置lua虚拟机", "原生GG接口"};
+        String[] runnerValues = {"builtin", "native_gg"};
+        int currentIndex = currentRunner.equals("native_gg") ? 1 : 0;
+
+        new AlertDialog.Builder(this)
+                .setTitle("运行器")
+                .setSingleChoiceItems(runnerNames, currentIndex, null)
+                .setPositiveButton("确定", (dialog, which) -> {
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        String selectedRunner = runnerValues[selected];
+                        if ("native_gg".equals(selectedRunner)) {
+                            boolean hintDismissed = prefs.getBoolean(PREF_NATIVE_GG_HINT_DISMISSED, false);
+                            if (hintDismissed) {
+                                prefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
+                                Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                            } else {
+                                showNativeGgHintDialog(selectedRunner);
+                            }
+                        } else {
+                            prefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
+                            Toast.makeText(this, "已切换为内置lua虚拟机", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showNativeGgHintDialog(String targetRunner) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+
+        TextView tvHint = new TextView(this);
+        tvHint.setText("该功能需要您已安装带本地http接口特定版本GG修改器，请确保您已安装并打开GG");
+        tvHint.setTextColor(Color.BLACK);
+        tvHint.setTextSize(15);
+        layout.addView(tvHint);
+
+        CheckBox cbDontShow = new CheckBox(this);
+        cbDontShow.setText("不再显示");
+        cbDontShow.setTextColor(Color.GRAY);
+        cbDontShow.setTextSize(14);
+        LinearLayout.LayoutParams cbParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cbParams.topMargin = 16;
+        cbDontShow.setLayoutParams(cbParams);
+        layout.addView(cbDontShow);
+
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setView(layout)
+                .setPositiveButton("前往安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        prefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    prefs.edit().putString(PREF_RUNNER, targetRunner).apply();
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/mitchell-yr/GameGuardian-Api/releases/"));
+                    startActivity(intent);
+                })
+                .setNeutralButton("已安装", (dialog, which) -> {
+                    if (cbDontShow.isChecked()) {
+                        prefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
+                    }
+                    prefs.edit().putString(PREF_RUNNER, targetRunner).apply();
+                    Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", (dialog, which) -> {
+                    // 取消时不保存，保持原来的运行器选择
+                })
+                .show();
     }
 
     /**
@@ -1226,17 +1320,31 @@ public class CodeEditorLua extends AppCompatActivity {
             return;
         }
 
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String runner = prefs.getString(PREF_RUNNER, "builtin");
+
+        if ("native_gg".equals(runner)) {
+            executeViaNativeGg(luaCode);
+        } else {
+            executeViaBuiltinLua(luaCode);
+        }
+    }
+
+    /**
+     * 使用内置 Lua 虚拟机执行脚本
+     */
+    private void executeViaBuiltinLua(String luaCode) {
         // 打开日志抽屉
         openLogDrawer();
 
-        // 清空之前的日志（包括 LuaEngine 的日志）
+        // 清空之前的日志
         if (luaEngine != null) {
             luaEngine.clearLog();
         }
 
         // 记录开始执行的日志
         runOnUiThread(() -> {
-            logTextView.append("[信息] ========== 开始执行脚本 ==========\n");
+            logTextView.append("[信息] ========== 开始执行脚本（内置Lua虚拟机） ==========\n");
             logTextView.append("[信息] 时间: " + getCurrentTime() + "\n");
             logTextView.append("[信息] ------------------------------\n");
             scrollLogToBottom();
@@ -1245,23 +1353,157 @@ public class CodeEditorLua extends AppCompatActivity {
         // 在新线程中执行脚本
         new Thread(() -> {
             try {
-                // 执行脚本 - LuaEngine 会自动输出到 logTextView
                 luaEngine.executeString(luaCode);
 
-                // 执行成功
                 runOnUiThread(() -> {
                     logTextView.append("\n[成功] ========== 执行完成 ==========\n");
                     scrollLogToBottom();
                 });
 
             } catch (Exception e) {
-                // 执行失败
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     logTextView.append("\n[错误] 执行错误: " + e.getMessage() + "\n");
                     logTextView.append("[错误] ========== 执行失败 ==========\n");
                     scrollLogToBottom();
                 });
+            }
+        }).start();
+    }
+
+    /**
+     * 通过原生GG HTTP接口执行脚本
+     */
+    private void executeViaNativeGg(String luaCode) {
+        openLogDrawer();
+
+        runOnUiThread(() -> {
+            logTextView.setText("");
+            logTextView.append("[信息] ========== 开始执行脚本（原生GG接口） ==========\n");
+            logTextView.append("[信息] 时间: " + getCurrentTime() + "\n");
+            logTextView.append("[信息] 目标: http://127.0.0.1:8080/api/gg/runScript\n");
+            logTextView.append("[信息] 脚本长度: " + luaCode.length() + " 字符\n");
+            logTextView.append("[信息] ------------------------------\n");
+            scrollLogToBottom();
+        });
+
+        new Thread(() -> {
+            Socket socket = null;
+            try {
+                // 用原始Socket发HTTP/1.0请求，避免HttpURLConnection在无Content-Length响应时阻塞
+                socket = new Socket();
+                socket.setTcpNoDelay(true);
+                socket.connect(new InetSocketAddress("127.0.0.1", 8080), 3000);
+                socket.setSoTimeout(15000);
+
+                byte[] body = luaCode.getBytes("UTF-8");
+
+                // GG服务器把Content-Length当字符数用（不是字节数），所以用luaCode.length()
+                StringBuilder request = new StringBuilder();
+                request.append("POST /api/gg/runScript HTTP/1.0\r\n");
+                request.append("Host: 127.0.0.1:8080\r\n");
+                request.append("Content-Type: text/plain; charset=utf-8\r\n");
+                request.append("Content-Length: ").append(luaCode.length()).append("\r\n");
+                request.append("Connection: close\r\n");
+                request.append("\r\n");
+
+                OutputStream os = socket.getOutputStream();
+                os.write(request.toString().getBytes("UTF-8"));
+                os.write(body);
+                os.flush();
+                socket.shutdownOutput();
+
+                // 读响应：逐行读到空行（headers结束），然后读body直到EOF
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream(), "UTF-8"));
+
+                String statusLine = reader.readLine();
+                if (statusLine == null) {
+                    throw new IOException("服务器未返回状态行");
+                }
+
+                boolean isOk = statusLine.contains("200");
+                runOnUiThread(() -> {
+                    logTextView.append("[调试] 状态: " + statusLine + "\n");
+                    scrollLogToBottom();
+                });
+
+                // 跳过响应头
+                String headerLine;
+                while ((headerLine = reader.readLine()) != null && headerLine.length() > 0) {
+                    // skip headers
+                }
+
+                // 读响应body（读到EOF，因为HTTP/1.0 + Connection: close）
+                StringBuilder responseBody = new StringBuilder();
+                String bodyLine;
+                while ((bodyLine = reader.readLine()) != null) {
+                    responseBody.append(bodyLine);
+                }
+                reader.close();
+
+                String responseStr = responseBody.toString();
+
+                if (isOk) {
+                    try {
+                        JSONObject json = new JSONObject(responseStr);
+                        boolean success = json.optBoolean("success", false);
+                        String result = json.optString("result", "");
+
+                        runOnUiThread(() -> {
+                            if (success) {
+                                logTextView.append("\n[成功] GG返回: " + result + "\n");
+                            } else {
+                                logTextView.append("\n[错误] GG返回失败: " + result + "\n");
+                            }
+                            logTextView.append("[信息] ========== 执行完成 ==========\n");
+                            scrollLogToBottom();
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            logTextView.append("\n[警告] JSON解析异常: " + e.getMessage() + "\n");
+                            logTextView.append("[信息] 原始响应: " + responseStr + "\n");
+                            logTextView.append("[信息] ========== 执行完成 ==========\n");
+                            scrollLogToBottom();
+                        });
+                    }
+                } else {
+                    String finalResp = responseStr;
+                    runOnUiThread(() -> {
+                        logTextView.append("\n[错误] HTTP状态异常: " + statusLine + "\n");
+                        if (!finalResp.isEmpty()) {
+                            logTextView.append("[错误] 响应: " + finalResp + "\n");
+                        }
+                        logTextView.append("[错误] ========== 执行失败 ==========\n");
+                        scrollLogToBottom();
+                    });
+                }
+
+            } catch (java.net.ConnectException e) {
+                runOnUiThread(() -> {
+                    logTextView.append("\n[错误] 连接被拒绝: 127.0.0.1:8080\n");
+                    logTextView.append("[错误] 请确保GG修改器已打开且HTTP服务已启动\n");
+                    logTextView.append("[错误] ========== 执行失败 ==========\n");
+                    scrollLogToBottom();
+                });
+            } catch (java.net.SocketTimeoutException e) {
+                runOnUiThread(() -> {
+                    logTextView.append("\n[错误] 读取超时 (15s)，GG服务器可能正在执行脚本但未响应\n");
+                    logTextView.append("[错误] 请检查GG修改器状态\n");
+                    logTextView.append("[错误] ========== 执行失败 ==========\n");
+                    scrollLogToBottom();
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    logTextView.append("\n[错误] 网络错误: " + e.getMessage() + "\n");
+                    logTextView.append("[错误] ========== 执行失败 ==========\n");
+                    scrollLogToBottom();
+                });
+            } finally {
+                if (socket != null) {
+                    try { socket.close(); } catch (Exception ignored) {}
+                }
             }
         }).start();
     }
