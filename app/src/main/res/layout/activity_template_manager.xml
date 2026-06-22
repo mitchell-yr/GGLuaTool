@@ -41,6 +41,54 @@
             android:tint="@android:color/white" />
     </LinearLayout>
 
+    <!-- 语言过滤标签 -->
+    <LinearLayout
+        android:id="@+id/filterTabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:elevation="2dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingVertical="8dp">
+
+        <TextView
+            android:id="@+id/tab_all"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/tab_background_selected"
+            android:gravity="center"
+            android:text="全部"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tab_lua"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/tab_background_unselected"
+            android:gravity="center"
+            android:text="Lua"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tab_cpp"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/tab_background_unselected"
+            android:gravity="center"
+            android:text="C++"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+    </LinearLayout>
+
     <!-- 模板列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

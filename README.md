@@ -43,15 +43,16 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 
 ## 技术栈
 
-| 类别    | 技术                              |
-| ----- | ------------------------------- |
-| 语言    | Java                            |
-| 构建工具  | Gradle                          |
-| 代码编辑器 | sora-editor                     |
-| Lua引擎 | Luaj（魔改版，jse3.0.1） |
-| 反编译   | unluac、TD                       |
-| APK修改 | smali注入、ARSC编辑、APK签名            |
-| 加密    | 自定义Lua加密（字符串加密、函数/变量混淆、垃圾代码注入）  |
+| 类别    | 技术                             |
+|-------|--------------------------------|
+| 语言    | Java                           |
+| 构建工具  | Gradle                         |
+| 代码编辑器 | sora-editor                    |
+| Lua引擎 | Luaj（魔改版，jse3.0.1）和GG接口        |
+| Cpp引擎 | C4Droid接口                      |
+| 反编译   | unluac、TD                      |
+| APK修改 | smali注入、ARSC编辑、APK签名           |
+| 加密    | 自定义Lua加密（字符串加密、函数/变量混淆、垃圾代码注入） |
 
 ## 构建说明
 
@@ -81,37 +82,40 @@ app/src/main/java/mituran/gglua/tool/    # 主包
 
 ### 目前支持
 
-| 功能     | 说明                                             |
-|--------|------------------------------------------------|
-| 脚本编辑器  | 基于sora-editor，支持代码补全、语法高亮                      |
-| 脚本模板   | 一键插入常用脚本模板                                     |
-| 构建发行品  | 一键生成定制GG客户端，可自选添加自定义函数和内置脚本                    |
-| Lua反编译 | unluac和TD两种字节码反编译方式（unluac遇到技术问题解决中）           |
-| 脚本编译   | 编译脚本并添加加密                                      |
-| 语法检查   | Lua语法检查                                        |
-| 可视化编辑  | 积木式可视化Lua脚本编辑                                  |
-| Lua虚拟机 | 内置支持GG函数的lua虚拟机（用于过防御、反检测、函数调用自吐和动态调试），代码一键试运行 |
-| 调用GG接口 | 对接带有api的GG实现运行                                 |
+| 功能            | 说明                                             |
+|---------------|------------------------------------------------|
+| 脚本编辑器         | 基于sora-editor，支持代码补全、语法高亮                      |
+| 脚本模板          | 一键插入常用脚本模板                                     |
+| 构建发行品         | 一键生成定制GG客户端，可自选添加自定义函数和内置脚本                    |
+| Lua反编译        | unluac和TD两种字节码反编译方式（unluac遇到技术问题解决中）           |
+| 脚本编译          | 编译脚本并添加加密                                      |
+| 语法检查          | Lua语法检查                                        |
+| 可视化编辑         | 积木式可视化Lua脚本编辑                                  |
+| Lua虚拟机        | 内置支持GG函数的lua虚拟机（用于过防御、反检测、函数调用自吐和动态调试），代码一键试运行 |
+| 调用GG接口        | 对接带有api的GG实现运行                                 |
+| 调用C4Droid导出接口 | 对接带有api的C4Droid实现运行（即将开源发布）                    |
 
-> 注意：上述功能随时可能变动
-> 调用GG接口依赖于开源项目[GameGuardian-Api](https://github.com/mitchell-yr/GameGuardian-Api)，需要安装这个项目内指定版本GG
+> 注意：上述功能随时可能变动  
+> 调用GG接口依赖于开源项目[GameGuardian-Api](https://github.com/mitchell-yr/GameGuardian-Api)，需要安装这个项目内指定版本GG  
+>  调用C4Droid导出so接口依赖于~~开源项目[C4Droid-Api](https://github.com/mitchell-yr/C4Droid-Api)，需要安装这个项目内指定版本C4Droid~~
 ### 即将支持
 
-| 功能    | 说明                                 |
-| ----- | ---------------------------------- |
-| C++编译 | 一键生成、编译（可能取消一键编译）                  |
-| 直装构建  | 一键构建直装（长期目标）                       |
-| 高级加密  | 更高等级的加密方案                          |
-| 动态调试  | 基于内置luaj的即时动态调试（未来加入插桩、变量追踪）       |
-| 内置框架  | 基于spacecore（安卓9-14），后续加入blackbox适配 |
+| 功能    | 说明                           |
+|-------|------------------------------|
+| C++编译 | 一键生成、编译（正在开发中）               |
+| 直装构建  | 一键构建直装（长期目标）                 |
+| 高级加密  | 更高等级的加密方案                    |
+| 动态调试  | 基于内置luaj的即时动态调试（未来加入插桩、变量追踪） |
+| 内置框架  | 基于spacecore（安卓9-14）          |
 
 ### 功能测试
-已通过小米8(安卓10)、红米k40(安卓11)、一加15(安卓16)、iqoo15ultra(安卓16)的真机测试，通过pixel9(安卓14)模拟机测试
-
+主要功能过小米8(安卓10)、红米k40(安卓11)、一加15(安卓16)、iqoo15ultra(安卓16)的真机测试，通过pixel9(安卓14)模拟机测试  
+全部功能通过红米k40(安卓11)测试
 ## 使用方法
 
 ### 脚本执行
-我们采用了内置lua虚拟机和对接GG接口(GameGuardian-Api)两套方案
+lua脚本我们采用了内置lua虚拟机和对接GG接口(GameGuardian-Api)两套方案  
+c++脚本对接C4Droid导出so的接口(C4Droid-Api，即将开源发布)方案
 #### 虚拟机函数添加
 在`LuaEngine.java`中`createGgLibrary`方法中按照示例添加GG函数（即`gg.xxx()`）:
 ```lua
@@ -127,7 +131,7 @@ ggTable.set("方法名", new VarArgFunction() {
 
 #### GameGuardian-Api相关api
 | 端点                     | 方法   | 说明                                                        |
-| ---------------------- | ---- | --------------------------------------------------------- |
+|------------------------|------|-----------------------------------------------------------|
 | `/api/status`          | GET  | 服务状态                                                      |
 | `/api/test`            | GET  | 连接测试                                                      |
 | `/api/gg/info`         | GET  | 目标进程信息（PID、包名）                                            |
@@ -137,6 +141,42 @@ ggTable.set("方法名", new VarArgFunction() {
 | `/api/gg/editAll`      | POST | 批量修改 `{"value":"999"}`（实验api，不稳定，请正式使用runScript）          |
 | `/api/gg/runScript`    | POST | **执行任意 GG Lua 脚本（请主要使用这个）**                               |
 >注意，调用api要防止阻塞线程
+
+#### ~~C4Droid-Api相关api~~
+##### 接口说明
+**Action**: `com.n0n3m4.droidc.EXPORT_BINARY`  
+**参数**:
+| 参数 | 必需 | 说明 |
+|------|------|------|
+| `source_files` | ✅ | 源文件路径，逗号分隔。例：`"/sdcard/a.cpp,/sdcard/b.cpp"` |
+| `output_path` | ✅ | 输出 .so 路径。例：`"/sdcard/output.so"` |
+| `compile_mode` | ❌ | `"c"` 或 `"cpp"`，默认根据扩展名自动检测 |
+
+**结果**：写入 `/data/data/com.n0n3m4.droidc/files/RESULT_{timestamp}` 文件：
+
+| 内容 | 含义 |
+|------|------|
+| `SUCCESS:/path/output.so` | 导出成功 |
+| `FAIL:source_files or output_path missing` | 缺少参数 |
+| `FAIL:GCC not installed` | GCC 未安装 |
+| `FAIL:compilation failed` | 编译失败 |
+| `FAIL:异常信息` | 其他错误 |
+
+##### 调用示例
+**App 调用**：
+```java
+Intent intent = new Intent("com.n0n3m4.droidc.EXPORT_BINARY");
+intent.putExtra("source_files", "/sdcard/a.cpp,/sdcard/b.cpp");
+intent.putExtra("output_path", "/sdcard/output.so");
+intent.putExtra("compile_mode", "cpp");
+sendBroadcast(intent);
+```
+##### 工作流程
+1. 读取所有源文件内容，合并写入 `{filesDir}/temp_.cpp`
+2. 自动检测或使用指定的编译模式（C99 / C++14）
+3. 构建 shell 脚本，调用 C4droid 自带的 GCC 编译
+4. 编译成功后，复制产物到 `output_path`
+5. 清理临时文件，写入结果
 ### 如何制作GG修改器函数包
 
 函数包（.ggfunc）是`定制GG修改器`功能中用于给修改器的luaj虚拟机添加用户自定义函数的，一个正常的函数包（ZIP 结构）应该包含：  

@@ -46,6 +46,18 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.ViewHo
         holder.nameText.setText(template.name);
         holder.versionText.setText("版本: " + template.version);
 
+        // 显示语言标签
+        String lang = template.language != null ? template.language : "lua";
+        if ("cpp".equals(lang)) {
+            holder.languageText.setText("C++");
+            holder.languageText.setBackgroundColor(0x1F4CAF50);
+            holder.languageText.setTextColor(0xFF4CAF50);
+        } else {
+            holder.languageText.setText("Lua");
+            holder.languageText.setBackgroundColor(0x1F2196F3);
+            holder.languageText.setTextColor(0xFF2196F3);
+        }
+
         holder.manageButton.setOnClickListener(v -> showManageMenu(v, template));
         holder.editButton.setOnClickListener(v -> editTemplate(template));
     }
@@ -165,6 +177,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.ViewHo
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView nameText;
         TextView versionText;
+        TextView languageText;
         Button manageButton;
         Button editButton;
 
@@ -172,6 +185,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.ViewHo
             super(view);
             nameText = view.findViewById(R.id.templateName);
             versionText = view.findViewById(R.id.templateVersion);
+            languageText = view.findViewById(R.id.templateLanguage);
             manageButton = view.findViewById(R.id.manageButton);
             editButton = view.findViewById(R.id.editButton);
         }

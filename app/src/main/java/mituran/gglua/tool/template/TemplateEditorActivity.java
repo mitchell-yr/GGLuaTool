@@ -10,6 +10,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +33,7 @@ import mituran.gglua.tool.R;
 
 public class TemplateEditorActivity extends AppCompatActivity {
 
-    private static final String TEMPLATES_DIR = "/GGtool/templates/";
+    private static final String TEMPLATES_DIR = "/GGtool/templates";
 
     private TextInputEditText nameEditText;
     private TextInputEditText versionEditText;
@@ -45,8 +47,10 @@ public class TemplateEditorActivity extends AppCompatActivity {
     private TextInputLayout versionLayout;
     private ScrollView lineNumberScrollView;
     private ScrollView codeScrollView;
+    private RadioGroup languageGroup;
 
     private String originalName;
+    private String currentLanguage = "lua";
     private boolean isEditMode = false;
     private boolean isCodeValid = true;
 
@@ -74,6 +78,16 @@ public class TemplateEditorActivity extends AppCompatActivity {
         versionLayout = findViewById(R.id.versionLayout);
         lineNumberScrollView = findViewById(R.id.lineNumberScrollView);
         codeScrollView = findViewById(R.id.codeScrollView);
+        languageGroup = findViewById(R.id.languageGroup);
+
+        // 语言切换监听
+        languageGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_language_cpp) {
+                currentLanguage = "cpp";
+            } else {
+                currentLanguage = "lua";
+            }
+        });
 
         // 设置FAB点击事件
         fabSave.setOnClickListener(v -> saveTemplate());
@@ -112,6 +126,10 @@ public class TemplateEditorActivity extends AppCompatActivity {
             originalName = intent.getStringExtra("template_name");
             String version = intent.getStringExtra("template_version");
             String code = intent.getStringExtra("template_code");
+            String lang = intent.getStringExtra("template_language");
+            if (lang != null) {
+                currentLanguage = lang;
+            }
 
             nameEditText.setText(originalName);
             versionEditText.setText(version);
@@ -125,6 +143,13 @@ public class TemplateEditorActivity extends AppCompatActivity {
             fabSave.setText("创建模板");
             fabSave.setIconResource(R.drawable.ic_check);
             versionEditText.setText("1.0");
+        }
+
+        // 设置语言选择
+        if ("cpp".equals(currentLanguage)) {
+            languageGroup.check(R.id.rb_language_cpp);
+        } else {
+            languageGroup.check(R.id.rb_language_lua);
         }
     }
 
@@ -285,7 +310,8 @@ public class TemplateEditorActivity extends AppCompatActivity {
         }
 
         try {
-            File dir = new File(Environment.getExternalStorageDirectory() + TEMPLATES_DIR);
+            File dir = new File(Environment.getExternalStorageDirectory(),
+                    TEMPLATES_DIR + "/" + currentLanguage + "/");
             if (!dir.exists()) {
                 dir.mkdirs();
             }
@@ -303,6 +329,7 @@ public class TemplateEditorActivity extends AppCompatActivity {
             JSONObject json = new JSONObject();
             json.put("version", version);
             json.put("code", code);
+            json.put("language", currentLanguage);
             json.put("createTime", System.currentTimeMillis());
             json.put("updateTime", System.currentTimeMillis());
 
@@ -382,16 +409,30 @@ public class TemplateEditorActivity extends AppCompatActivity {
     }
 
     private void showSnippetDialog() {
-        String[] snippets = {
-                "-- 函数框架\nfunction main()\n    -- 在此处编写代码\nend",
-                "-- 循环示例\nfor i = 1, 10 do\n    print(i)\nend",
-                "-- 条件判断\nif condition then\n    -- 条件为真时执行\nelse\n    -- 条件为假时执行\nend",
-                "-- 函数定义\nlocal function myFunction(param1, param2)\n    -- 函数体\n    return result\nend"
-        };
+        String[] titles;
+        String[] snippets;
+
+        if ("cpp".equals(currentLanguage)) {
+            titles = new String[]{"基础函数", "循环结构", "条件判断", "函数定义"};
+            snippets = new String[]{
+                    "// 函数框架\nint main() {\n    // 在此处编写代码\n    return 0;\n}",
+                    "// 循环示例\nfor (int i = 0; i < 10; i++) {\n    printf(\"%d\\n\", i);\n}",
+                    "// 条件判断\nif (condition) {\n    // 条件为真时执行\n} else {\n    // 条件为假时执行\n}",
+                    "// 函数定义\nint myFunction(int param1, int param2) {\n    // 函数体\n    return result;\n}"
+            };
+        } else {
+            titles = new String[]{"基础函数", "循环结构", "条件判断", "函数定义"};
+            snippets = new String[]{
+                    "-- 函数框架\nfunction main()\n    -- 在此处编写代码\nend",
+                    "-- 循环示例\nfor i = 1, 10 do\n    print(i)\nend",
+                    "-- 条件判断\nif condition then\n    -- 条件为真时执行\nelse\n    -- 条件为假时执行\nend",
+                    "-- 函数定义\nlocal function myFunction(param1, param2)\n    -- 函数体\n    return result\nend"
+            };
+        }
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("插入代码片段")
-                .setItems(new String[]{"基础函数", "循环结构", "条件判断", "函数定义"},
+                .setItems(titles,
                         (dialog, which) -> {
                             int position = codeEditText.getSelectionStart();
                             codeEditText.getText().insert(position, snippets[which]);

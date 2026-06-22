@@ -71,6 +71,18 @@
                 android:value=".MainActivity" />
         </activity>
         <activity
+            android:name=".CodeEditorCpp"
+            android:label="cpp脚本编辑"
+            android:theme="@style/Theme.悠然GG助手"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".MainActivity">
+            <!-- 如果支持API 16以下，添加以下meta-data -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
             android:name=".template.TemplateManagerActivity"
             android:label="模板管理"
             android:theme="@style/Theme.悠然GG助手"

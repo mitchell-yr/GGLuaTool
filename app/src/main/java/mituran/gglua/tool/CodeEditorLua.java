@@ -997,7 +997,10 @@ public class CodeEditorLua extends AppCompatActivity {
     private void initTemplates() {
         templates = new ArrayList<>();
 
-        File templateDir = new File(Environment.getExternalStorageDirectory(),"/GGtool/templates/");
+        // 确保内置模板已复制
+        CppCompiler.ensureBuiltinTemplates("lua", this);
+
+        File templateDir = new File(Environment.getExternalStorageDirectory(),"/GGtool/templates/lua/");
 
         if (!templateDir.exists() || !templateDir.isDirectory()) {
             Toast.makeText(this, "模板目录不存在", Toast.LENGTH_SHORT).show();

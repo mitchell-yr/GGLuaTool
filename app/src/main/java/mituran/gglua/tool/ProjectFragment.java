@@ -678,15 +678,20 @@ public class ProjectFragment extends Fragment {
         btnOpen.setOnClickListener(v -> {
             if(Objects.equals(item.type, "可视化lua项目")){
                 // 启动lua可视化脚本编辑器界面
-                //Toast.makeText(getContext(), "1"+item.type, Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(getContext(), MainActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("path", item.path);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }else if(Objects.equals(item.type, "标准cpp项目")){
+                // 启动cpp脚本编辑器界面
+                Intent intent = new Intent(getContext(), CodeEditorCpp.class);
                 Bundle bundle = new Bundle();
                 bundle.putString("path", item.path);
                 intent.putExtras(bundle);
                 startActivity(intent);
             }else {
                 // 启动lua脚本编辑器界面
-                //Toast.makeText(getContext(), "2"+item.type, Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(getContext(), CodeEditorLua.class);
                 Bundle bundle = new Bundle();
                 bundle.putString("path", item.path);

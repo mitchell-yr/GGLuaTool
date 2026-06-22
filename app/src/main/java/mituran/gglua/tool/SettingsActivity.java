@@ -1,5 +1,6 @@
 package mituran.gglua.tool;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +18,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +36,13 @@ import com.google.android.material.textfield.TextInputEditText;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +65,8 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String PREF_THEME = "theme";
     private static final String PREF_AUTO_SAVE = "autoSave";
     private static final String PREF_AUTO_BACKUP = "autoBackup";
-    private static final String PREF_RUNNER = "runner";
+    private static final String PREF_LUA_RUNNER = "runner";
+    private static final String PREF_CPP_RUNNER = "cpp_runner";
     private static final String PREF_NATIVE_GG_HINT_DISMISSED = "native_gg_hint_dismissed";
 
     // 可视化编辑器设置键值
@@ -73,7 +84,8 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView tvServerAddress;
     private TextView tvFontSizeValue;
     private TextView tvThemeValue;
-    private TextView tvRunnerValue;
+    private TextView tvLuaRunnerValue;
+    private TextView tvCppRunnerValue;
     private SwitchMaterial switchLineNumbers, switchWordWrap, switchAutoSave, switchAutoBackup;
 
     private SwitchMaterial switchVisualAutoSave, switchVisualAutoBackup;
@@ -99,6 +111,7 @@ public class SettingsActivity extends AppCompatActivity {
         initServerAddress();
         initEditorSettings();
         initVisualEditorSettings();
+        initMemoryToolsManagement();
     }
 
     private void initToolbar() {
@@ -355,9 +368,13 @@ public class SettingsActivity extends AppCompatActivity {
         String theme = editorPrefs.getString(PREF_THEME, "solarized-light");
         tvThemeValue.setText(getThemeDisplayName(theme));
 
-        tvRunnerValue = findViewById(R.id.tv_runner_value);
-        String runner = editorPrefs.getString(PREF_RUNNER, "builtin");
-        tvRunnerValue.setText(getRunnerDisplayName(runner));
+        tvLuaRunnerValue = findViewById(R.id.tv_lua_runner_value);
+        String luaRunner = editorPrefs.getString(PREF_LUA_RUNNER, "builtin");
+        tvLuaRunnerValue.setText(getRunnerDisplayName(luaRunner));
+
+        tvCppRunnerValue = findViewById(R.id.tv_cpp_runner_value);
+        String cppRunner = editorPrefs.getString(PREF_CPP_RUNNER, "");
+        tvCppRunnerValue.setText(cppRunner.isEmpty() ? "待开发" : cppRunner);
 
         // 字体大小点击
         findViewById(R.id.ll_font_size).setOnClickListener(v -> showFontSizeDialog());
@@ -365,8 +382,11 @@ public class SettingsActivity extends AppCompatActivity {
         // 主题点击
         findViewById(R.id.ll_theme).setOnClickListener(v -> showThemeDialog());
 
-        // 运行设置点击
-        findViewById(R.id.ll_runner).setOnClickListener(v -> showRunnerSettingsDialog());
+        // lua运行设置点击
+        findViewById(R.id.ll_lua_runner).setOnClickListener(v -> showLuaRunnerSettingsDialog());
+
+        // cpp运行设置点击
+        findViewById(R.id.ll_cpp_runner).setOnClickListener(v -> showCppRunnerSettingsDialog());
 
         // Switch 监听
         CompoundButton.OnCheckedChangeListener switchListener = (buttonView, isChecked) -> {
@@ -460,15 +480,15 @@ public class SettingsActivity extends AppCompatActivity {
         return "内置lua虚拟机";
     }
 
-    private void showRunnerSettingsDialog() {
-        String currentRunner = editorPrefs.getString(PREF_RUNNER, "builtin");
+    private void showLuaRunnerSettingsDialog() {
+        String currentRunner = editorPrefs.getString(PREF_LUA_RUNNER, "builtin");
 
         String[] runnerNames = {"内置lua虚拟机", "原生GG接口"};
         String[] runnerValues = {"builtin", "native_gg"};
         int currentIndex = currentRunner.equals("native_gg") ? 1 : 0;
 
         new AlertDialog.Builder(this)
-                .setTitle("运行器")
+                .setTitle("lua运行器")
                 .setSingleChoiceItems(runnerNames, currentIndex, null)
                 .setPositiveButton("确定", (dialog, which) -> {
                     int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
@@ -477,15 +497,15 @@ public class SettingsActivity extends AppCompatActivity {
                         if ("native_gg".equals(selectedRunner)) {
                             boolean hintDismissed = editorPrefs.getBoolean(PREF_NATIVE_GG_HINT_DISMISSED, false);
                             if (hintDismissed) {
-                                editorPrefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
-                                tvRunnerValue.setText(getRunnerDisplayName(selectedRunner));
+                                editorPrefs.edit().putString(PREF_LUA_RUNNER, selectedRunner).apply();
+                                tvLuaRunnerValue.setText(getRunnerDisplayName(selectedRunner));
                                 Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
                             } else {
-                                showNativeGgHintDialog(selectedRunner);
+                                showLuaNativeGgHintDialog(selectedRunner);
                             }
                         } else {
-                            editorPrefs.edit().putString(PREF_RUNNER, selectedRunner).apply();
-                            tvRunnerValue.setText(getRunnerDisplayName(selectedRunner));
+                            editorPrefs.edit().putString(PREF_LUA_RUNNER, selectedRunner).apply();
+                            tvLuaRunnerValue.setText(getRunnerDisplayName(selectedRunner));
                             Toast.makeText(this, "已切换为内置lua虚拟机", Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -494,7 +514,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showNativeGgHintDialog(String targetRunner) {
+    private void showLuaNativeGgHintDialog(String targetRunner) {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 10);
@@ -523,8 +543,8 @@ public class SettingsActivity extends AppCompatActivity {
                     if (cbDontShow.isChecked()) {
                         editorPrefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
                     }
-                    editorPrefs.edit().putString(PREF_RUNNER, targetRunner).apply();
-                    tvRunnerValue.setText(getRunnerDisplayName(targetRunner));
+                    editorPrefs.edit().putString(PREF_LUA_RUNNER, targetRunner).apply();
+                    tvLuaRunnerValue.setText(getRunnerDisplayName(targetRunner));
                     Intent intent = new Intent(Intent.ACTION_VIEW,
                             Uri.parse("https://github.com/mitchell-yr/GameGuardian-Api/releases/"));
                     startActivity(intent);
@@ -533,14 +553,157 @@ public class SettingsActivity extends AppCompatActivity {
                     if (cbDontShow.isChecked()) {
                         editorPrefs.edit().putBoolean(PREF_NATIVE_GG_HINT_DISMISSED, true).apply();
                     }
-                    editorPrefs.edit().putString(PREF_RUNNER, targetRunner).apply();
-                    tvRunnerValue.setText(getRunnerDisplayName(targetRunner));
+                    editorPrefs.edit().putString(PREF_LUA_RUNNER, targetRunner).apply();
+                    tvLuaRunnerValue.setText(getRunnerDisplayName(targetRunner));
                     Toast.makeText(this, "已切换为原生GG接口", Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", (dialog, which) -> {
-                    // 取消时不保存，保持原来的运行器选择
-                })
+                .setNegativeButton("取消", (dialog, which) -> {})
                 .show();
+    }
+
+    private void showCppRunnerSettingsDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("cpp运行器")
+                .setMessage("C++运行器功能即将推出，敬请期待。")
+                .setPositiveButton("确定", null)
+                .show();
+    }
+
+    // ==================== MemoryTools.h 管理 ====================
+
+    private TextView tvMemoryToolsStatus;
+    private static final int REQUEST_PICK_MEMORY_TOOLS = 2001;
+
+    private void initMemoryToolsManagement() {
+        tvMemoryToolsStatus = findViewById(R.id.tv_memory_tools_status);
+
+        // 启动时确保 MemoryTools.h 存在
+        CppCompiler compiler = new CppCompiler(this);
+        compiler.ensureMemoryToolsExist();
+        updateMemoryToolsStatus();
+
+        findViewById(R.id.ll_memory_tools_view).setOnClickListener(v -> viewMemoryTools());
+        findViewById(R.id.ll_memory_tools_replace).setOnClickListener(v -> pickMemoryToolsFile());
+        findViewById(R.id.ll_memory_tools_reset).setOnClickListener(v -> resetMemoryTools());
+    }
+
+    private void updateMemoryToolsStatus() {
+        File file = new File(CppCompiler.getMemoryToolsPath());
+        if (file.exists()) {
+            tvMemoryToolsStatus.setText("已就绪");
+            tvMemoryToolsStatus.setTextColor(Color.parseColor("#4CAF50"));
+        } else {
+            tvMemoryToolsStatus.setText("未就绪");
+            tvMemoryToolsStatus.setTextColor(Color.parseColor("#F44336"));
+        }
+    }
+
+    private void viewMemoryTools() {
+        CppCompiler compiler = new CppCompiler(this);
+        compiler.ensureMemoryToolsExist();
+
+        String content = readFileContent(CppCompiler.getMemoryToolsPath());
+        if (content == null) {
+            Toast.makeText(this, "无法读取 MemoryTools.h", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ScrollView scrollView = new ScrollView(this);
+        TextView textView = new TextView(this);
+        textView.setText(content);
+        textView.setTextSize(11);
+        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        textView.setTextColor(Color.BLACK);
+        textView.setPadding(24, 24, 24, 24);
+        textView.setHorizontallyScrolling(true);
+        scrollView.addView(textView);
+
+        new AlertDialog.Builder(this)
+                .setTitle("MemoryTools.h 内容")
+                .setView(scrollView)
+                .setPositiveButton("关闭", null)
+                .show();
+    }
+
+    private void pickMemoryToolsFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        String[] mimeTypes = {"text/x-c", "text/x-chdr", "text/plain"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        try {
+            startActivityForResult(intent, REQUEST_PICK_MEMORY_TOOLS);
+        } catch (Exception e) {
+            Toast.makeText(this, "无法打开文件选择器", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_PICK_MEMORY_TOOLS && resultCode == Activity.RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                try {
+                    InputStream is = getContentResolver().openInputStream(uri);
+                    if (is != null) {
+                        File destFile = new File(CppCompiler.getMemoryToolsPath());
+                        destFile.getParentFile().mkdirs();
+                        OutputStream os = new FileOutputStream(destFile);
+                        byte[] buffer = new byte[4096];
+                        int length;
+                        while ((length = is.read(buffer)) > 0) {
+                            os.write(buffer, 0, length);
+                        }
+                        os.flush();
+                        os.close();
+                        is.close();
+                        updateMemoryToolsStatus();
+                        Toast.makeText(this, "MemoryTools.h 已替换", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this, "替换失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    private void resetMemoryTools() {
+        new AlertDialog.Builder(this)
+                .setTitle("确认重置")
+                .setMessage("将 MemoryTools.h 恢复为内置默认版本，当前修改将丢失。确定继续？")
+                .setPositiveButton("确定", (dialog, which) -> {
+                    CppCompiler compiler = new CppCompiler(SettingsActivity.this);
+                    boolean success = compiler.resetMemoryTools();
+                    updateMemoryToolsStatus();
+                    if (success) {
+                        Toast.makeText(this, "MemoryTools.h 已恢复为默认版本", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "重置失败", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private String readFileContent(String filePath) {
+        try {
+            File file = new File(filePath);
+            if (!file.exists()) return null;
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(file), "UTF-8"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ==================== 可视化编辑器设置 ====================

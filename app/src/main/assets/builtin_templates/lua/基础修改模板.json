@@ -1,0 +1,5 @@
+{
+    "version": "1.0",
+    "code": "-- ========== 设置搜索范围 ==========\ngg.setRanges(gg.REGION_ANONYMOUS | gg.REGION_C_ALLOC | gg.REGION_C_HEAP)\n\n-- ========== 主特征码搜索 ==========\ngg.searchNumber(\"填写数值\", gg.TYPE_DWORD)\nlocal count = gg.getResultsCount()\nprint(\"搜索到: \" .. count .. \" 个结果\")\n\n-- ========== 过滤/偏移 ==========\nlocal results = gg.getResults(count)\ngg.clearResults()\n\n-- 可继续搜索优化...\n-- gg.refineNumber(\"填写数值\", gg.TYPE_DWORD)\n-- count = gg.getResultsCount()\n-- print(\"优化后: \" .. count .. \" 个结果\")\n\n-- ========== 写入修改 ==========\nif count > 0 then\n    results = gg.getResults(count)\n    local editValues = {}\n    for i, v in ipairs(results) do\n        editValues[i] = {address = v.address, flags = v.flags, value = \"要修改为的数值\"}\n    end\n    gg.setValues(editValues)\n    print(\"修改完成，共修改 \" .. count .. \" 条\")\n    gg.clearResults()\nelse\n    print(\"未找到结果\")\nend\n\n-- ========== 冻结（如不需要可删除） ==========\n-- 冻结需要使用 gg.addListItems 或循环写入\n\ngg.toast(\"脚本执行完成\")\n",
+    "language": "lua"
+}

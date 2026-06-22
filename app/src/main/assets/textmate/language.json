@@ -5,6 +5,12 @@
       "name": "lua",
       "scopeName": "source.lua",
       "languageConfiguration": "textmate/lua/language-configuration.json"
+    },
+    {
+      "grammar": "textmate/cpp/syntaxes/cpp.tmLanguage.json",
+      "name": "cpp",
+      "scopeName": "source.cpp",
+      "languageConfiguration": "textmate/cpp/language-configuration.json"
     }
   ]
 }
